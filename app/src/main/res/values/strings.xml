@@ -4,4 +4,5 @@
     <string name="str_confirm">Confirm</string>
     <string name="str_screenshot">Screenshots</string>
     <string name="str_result">Result</string>
+    <string name="str_empty_img_msg">Import screenshot now!</string>
 </resources>
