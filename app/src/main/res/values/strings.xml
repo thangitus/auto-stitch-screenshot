@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">AutoStitchScreenshot</string>
+    <string name="app_name">Auto Stitch</string>
+    <string name="str_cancel">Cancel</string>
+    <string name="str_confirm">Confirm</string>
+    <string name="str_screenshot">Screenshots</string>
+    <string name="str_result">Result</string>
 </resources>

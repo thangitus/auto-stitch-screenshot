@@ -22,7 +22,7 @@
             android:textColor="@android:color/white"
             android:fontFamily="@font/opensans_semibold"
             android:textSize="@dimen/large_size"
-            android:text="@string/str_screenshot" />
+            android:text="@string/str_result" />
         <ImageView
             android:id="@+id/btn_stitch"
             android:layout_width="@dimen/medium_img"
@@ -38,9 +38,13 @@
             android:src="@drawable/ic_add"/>
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/list_input"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/medium_space"/>
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/result_img"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/str_result"/>
+    </ScrollView>
 </LinearLayout>
