@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.openCVLibrary343
 /local.properties
 /.idea/caches
 /.idea/libraries

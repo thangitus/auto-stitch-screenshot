@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,63 +8,82 @@
     tools:context=".view.screen.MainActivity">
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/medium_space"
         android:background="@drawable/gradient_background"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="@dimen/medium_space"
+        app:layout_constraintTop_toTopOf="parent">
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@android:color/white"
             android:fontFamily="@font/opensans_semibold"
-            android:textSize="@dimen/large_size"
-            android:text="@string/str_screenshot" />
+            android:text="@string/str_screenshot"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/large_size" />
+
         <ImageView
             android:id="@+id/btn_stitch"
             android:layout_width="@dimen/medium_img"
             android:layout_height="@dimen/medium_img"
-            android:padding="@dimen/extra_small_space"
             android:layout_marginHorizontal="@dimen/medium_space"
-            android:src="@drawable/ic_stitch"/>
+            android:padding="@dimen/extra_small_space"
+            android:src="@drawable/ic_stitch" />
+
         <ImageView
             android:id="@+id/btn_add"
             android:layout_width="@dimen/medium_img"
             android:layout_height="@dimen/medium_img"
             android:padding="@dimen/extra_small_space"
-            android:src="@drawable/ic_add"/>
+            android:src="@drawable/ic_add" />
     </LinearLayout>
 
-    <FrameLayout
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list_input"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <LinearLayout
-            android:id="@+id/empty_layout"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+    <LinearLayout
+        android:id="@+id/empty_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:onClick="selectImage"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+        <ImageView
+            android:id="@+id/imageSelect"
+            android:layout_width="@dimen/large_img"
+            android:layout_height="@dimen/large_img"
+            android:src="@drawable/ic_empty_img" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_gravity="center"
-            android:gravity="center">
-            <ImageView
-                android:layout_width="@dimen/large_img"
-                android:layout_height="@dimen/large_img"
-                android:src="@drawable/ic_empty_img"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/lightGray"
-                android:fontFamily="@font/opensans_regular"
-                android:textSize="@dimen/medium_size"
-                android:layout_marginTop="@dimen/normal_space"
-                android:text="@string/str_empty_img_msg"/>
-        </LinearLayout>
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/list_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginVertical="@dimen/medium_space"/>
-    </FrameLayout>
+            android:layout_marginTop="@dimen/normal_space"
+            android:fontFamily="@font/opensans_regular"
+            android:text="@string/str_empty_img_msg"
+            android:textColor="@color/lightGray"
+            android:textSize="@dimen/medium_size" />
+    </LinearLayout>
 
-</LinearLayout>
+    <ImageView
+        android:id="@+id/test"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </ImageView>
+</androidx.constraintlayout.widget.ConstraintLayout>
