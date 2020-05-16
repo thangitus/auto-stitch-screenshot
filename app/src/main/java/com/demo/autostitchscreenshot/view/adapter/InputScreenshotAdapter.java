@@ -1,4 +1,4 @@
-package com.demo.autostitchscreenshot.adapter;
+package com.demo.autostitchscreenshot.view.adapter;
 
 import android.graphics.Bitmap;
 import android.view.LayoutInflater;

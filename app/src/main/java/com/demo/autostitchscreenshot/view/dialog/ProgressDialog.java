@@ -1,4 +1,4 @@
-package com.demo.autostitchscreenshot.dialog;
+package com.demo.autostitchscreenshot.view.dialog;
 
 import android.app.Activity;
 import android.app.Dialog;
