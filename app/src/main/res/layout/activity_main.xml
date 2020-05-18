@@ -39,7 +39,8 @@
             android:layout_width="@dimen/medium_img"
             android:layout_height="@dimen/medium_img"
             android:padding="@dimen/extra_small_space"
-            android:src="@drawable/ic_add" />
+            android:src="@drawable/ic_add"
+            android:onClick="selectImage"/>
     </LinearLayout>
 
 

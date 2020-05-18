@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -25,13 +26,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.demo.autostitchscreenshot.databinding.ActivityMainBinding;
 import com.demo.autostitchscreenshot.usecase.StitchImgPresenter;
 import com.demo.autostitchscreenshot.utils.Callback;
+import com.demo.autostitchscreenshot.utils.Constants;
 import com.demo.autostitchscreenshot.utils.SpacingItemDecoration;
 import com.demo.autostitchscreenshot.view.adapter.InputScreenshotAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements Callback.WithPair {
+public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer> {
    private static final String TAG = "MainActivity";
    private static final int REQUEST_CODE = 1;
 
@@ -53,8 +55,10 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       binding.listInput.addItemDecoration(new SpacingItemDecoration(25));
    }
    public void selectImage(View v) {
-      if (!checkPermission())
-         return;
+      if(checkPermission())
+         sendIntentPickImg();
+   }
+   private void sendIntentPickImg(){
       Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
       String[] mimeTypes = {"image/*"};
       intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -80,12 +84,10 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
             // When multiple images are selected.
             if (data.getClipData() != null) {
                ClipData clipData = data.getClipData();
-               Log.d("uri", clipData.toString());
                for (int i = 0; i < clipData.getItemCount(); i++) {
                   ClipData.Item item = clipData.getItemAt(i);
                   Uri uri = item.getUri();
                   String imgPath = getRealPathFromURI(uri);
-                  Log.d("path", imgPath);
                   imgPaths.add(imgPath);
                }
             }
@@ -101,13 +103,29 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    public boolean checkPermission() {
       int result = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
       if (result == PackageManager.PERMISSION_DENIED) {
-         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
          return false;
       }
       return true;
    }
-   @Override
-   public void run(Object o, Object o2) {
 
+   @Override
+   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+      switch (requestCode){
+         case REQUEST_CODE: {
+            if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+               sendIntentPickImg();
+            }
+            return;
+         }
+      }
+   }
+   @Override
+   public void run(String option, Integer index) {
+      if (option.equalsIgnoreCase(Constants.REMOVE)){
+         adapter.removeItem(index);
+         if(adapter.isEmptyData())
+            binding.emptyLayout.setVisibility(View.VISIBLE);
+      }
    }
 }

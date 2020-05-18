@@ -18,6 +18,7 @@ import com.demo.autostitchscreenshot.utils.Callback;
 import com.demo.autostitchscreenshot.utils.Constants;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class InputScreenshotAdapter extends RecyclerView.Adapter {
@@ -29,9 +30,18 @@ public class InputScreenshotAdapter extends RecyclerView.Adapter {
    public InputScreenshotAdapter(Context context, Callback.WithPair<String, Integer> callback) {
       this.context = context;
       this.callback = callback;
+      imgPaths = new ArrayList<>();
+   }
+   public void removeItem(int index){
+      imgPaths.remove(index);
+      notifyItemRemoved(index);
+      notifyItemRangeChanged(index, getItemCount());
+   }
+   public boolean isEmptyData(){
+      return imgPaths.isEmpty();
    }
    public void setImgPaths(List<String> imgPaths) {
-      this.imgPaths = imgPaths;
+      this.imgPaths.addAll(imgPaths);
    }
    @NonNull
    @Override
@@ -66,16 +76,10 @@ public class InputScreenshotAdapter extends RecyclerView.Adapter {
       }
 
       void bind(String imgPath, final int index) {
-         /*Log.v("path", imgPath);
-         Log.d("path ", imgPath);
-         Glide.with(context)
-              .load(imgPath)
-              .into(screenshot);*/
          if(imgPath!=null) {
             File file = new File(imgPath);
             if (file.exists()) {
                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-               Log.d("bitmap", bitmap.toString());
                screenshot.setImageBitmap(bitmap);
             }
          }
