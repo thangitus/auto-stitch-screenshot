@@ -11,4 +11,9 @@ public interface Callback {
         void run(T t, V v);
     }
 
+    interface ItemTouchListener{
+        void onMove(int fromPos, int toPos);
+        void swipe(int position, int direction);
+    }
+
 }
