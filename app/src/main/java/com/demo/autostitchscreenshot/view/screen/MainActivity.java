@@ -1,9 +1,11 @@
 package com.demo.autostitchscreenshot.view.screen;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -15,6 +17,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.demo.autostitchscreenshot.databinding.ActivityMainBinding;
@@ -48,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       binding.listInput.addItemDecoration(new SpacingItemDecoration(16));
    }
    public void selectImage(View v) {
+      if (!checkPermission())
+         return;
       Intent intent = new Intent();
       intent.setType("image/*");
       intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -61,7 +66,9 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && null != data)
          if (data.getData() != null) {
             Uri uri = data.getData();
-            imgPaths.add(getPath(this, uri));
+            //            imgPaths.add(getPath(this, uri));
+            imgPaths.add(uri.getPath()
+                            .replace("/document/raw:/", ""));
          } else {
             // When multiple images are selected.
             if (data.getClipData() != null) {
@@ -69,7 +76,9 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
                for (int i = 0; i < clipData.getItemCount(); i++) {
                   ClipData.Item item = clipData.getItemAt(i);
                   Uri uri = item.getUri();
-                  imgPaths.add(getPath(this, uri));
+                  //                  imgPaths.add(getPath(this, uri));
+                  imgPaths.add(uri.getPath()
+                                  .replace("/document/raw:/", ""));
                }
             }
          }
@@ -80,6 +89,15 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
          binding.emptyLayout.setVisibility(View.GONE);
       }
       super.onActivityResult(requestCode, resultCode, data);
+   }
+
+   public boolean checkPermission() {
+      int result = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+      if (result == PackageManager.PERMISSION_DENIED) {
+         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+         return false;
+      }
+      return true;
    }
    @Override
    public void run(Object o, Object o2) {
@@ -160,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       }
       return null;
    }
+
    private boolean isExternalStorageDocument(Uri uri) {
       return "com.android.externalstorage.documents".equals(uri.getAuthority());
    }
