@@ -1,6 +1,9 @@
 package com.demo.autostitchscreenshot.view.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +17,7 @@ import com.demo.autostitchscreenshot.R;
 import com.demo.autostitchscreenshot.utils.Callback;
 import com.demo.autostitchscreenshot.utils.Constants;
 
+import java.io.File;
 import java.util.List;
 
 public class InputScreenshotAdapter extends RecyclerView.Adapter {
@@ -62,9 +66,21 @@ public class InputScreenshotAdapter extends RecyclerView.Adapter {
       }
 
       void bind(String imgPath, final int index) {
+         /*Log.v("path", imgPath);
+         Log.d("path ", imgPath);
          Glide.with(context)
               .load(imgPath)
-              .into(screenshot);
+              .into(screenshot);*/
+         if(imgPath!=null) {
+            File file = new File(imgPath);
+            if (file.exists()) {
+               Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+               Log.d("bitmap", bitmap.toString());
+               screenshot.setImageBitmap(bitmap);
+            }
+         }
+         else
+            Log.d("path", "unknown");
 
          btnRemove.setOnClickListener(new View.OnClickListener() {
             @Override
