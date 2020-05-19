@@ -61,7 +61,9 @@ public class MessageDialog extends Dialog {
         btnConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                confirmListener.run();
+                if (confirmListener!=null)
+                    confirmListener.run();
+                dismiss();
             }
         });
     }

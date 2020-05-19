@@ -1,5 +1,6 @@
 package com.demo.autostitchscreenshot.usecase;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 
 import org.opencv.android.Utils;
@@ -9,14 +10,19 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.util.List;
 
+import static androidx.core.util.Preconditions.checkNotNull;
 import static org.opencv.core.CvType.CV_32FC1;
 
 public class StitchImgPresenter implements StitchImgUseCase.Presenter {
 
+    private StitchImgUseCase.View view;
+
+    @SuppressLint("RestrictedApi")
+    public StitchImgPresenter(StitchImgUseCase.View view){
+        this.view = checkNotNull(view);
+    }
 
     @Override
     public void subscribe() {
@@ -28,19 +34,24 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
 
     }
 
-    public Mat convertBitmapToMat(Bitmap img){
+    @Override
+    public void stitchImages(List<String> imgPaths){
+        view.onError("This feature is in develop!");
+    }
+
+    private Mat convertBitmapToMat(Bitmap img){
         Mat mat = new Mat();
         Utils.bitmapToMat(img, mat);
         return mat;
     }
 
-    public Mat convertToGrayscale(Mat mat){
+    private Mat convertToGrayscale(Mat mat){
         Mat result = new Mat();
         Imgproc.cvtColor(mat, result, Imgproc.COLOR_BayerRG2GRAY);
         return result;
     }
 
-    public Bitmap findMatching(Mat source, Mat template){
+    private Bitmap findMatching(Mat source, Mat template){
         Mat result;
         int resultCols = source.cols() - template.cols() + 1;
         int resultRows = source.rows() - template.rows() + 1;

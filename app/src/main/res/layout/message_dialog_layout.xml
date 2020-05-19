@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingVertical="@dimen/medium_space"
-    android:background="@drawable/round_corner_background">
+    android:background="@android:color/white">
     <TextView
         android:id="@+id/text_title"
         android:layout_width="wrap_content"
@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@android:color/black"
-        android:textSize="@dimen/normal_size"
+        android:textSize="@dimen/medium_size"
         android:fontFamily="@font/opensans_light"
         android:layout_gravity="center_horizontal"
         android:paddingVertical="@dimen/normal_space"

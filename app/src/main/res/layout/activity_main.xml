@@ -32,7 +32,8 @@
             android:layout_height="@dimen/medium_img"
             android:layout_marginHorizontal="@dimen/medium_space"
             android:padding="@dimen/extra_small_space"
-            android:src="@drawable/ic_stitch" />
+            android:src="@drawable/ic_stitch"
+            android:onClick="stitchImages"/>
 
         <ImageView
             android:id="@+id/btn_add"

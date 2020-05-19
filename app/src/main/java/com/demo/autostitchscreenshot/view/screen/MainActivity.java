@@ -1,9 +1,11 @@
 package com.demo.autostitchscreenshot.view.screen;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -18,30 +20,36 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.demo.autostitchscreenshot.databinding.ActivityMainBinding;
 import com.demo.autostitchscreenshot.usecase.StitchImgPresenter;
+import com.demo.autostitchscreenshot.usecase.StitchImgUseCase;
 import com.demo.autostitchscreenshot.utils.Callback;
 import com.demo.autostitchscreenshot.utils.Constants;
 import com.demo.autostitchscreenshot.utils.ItemTouchHelperCallback;
 import com.demo.autostitchscreenshot.utils.SpacingItemDecoration;
 import com.demo.autostitchscreenshot.view.adapter.InputScreenshotAdapter;
+import com.demo.autostitchscreenshot.view.dialog.MessageDialog;
+
+import static androidx.core.util.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.demo.autostitchscreenshot.utils.Utils.getRealImagePathFromURI;
 
-public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer>, Callback.ItemTouchListener {
+public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer>, Callback.ItemTouchListener, StitchImgUseCase.View {
    private static final String TAG = MainActivity.class.getSimpleName();
    private static final int REQUEST_CODE = 1;
 
-   private StitchImgPresenter presenter;
+   private StitchImgUseCase.Presenter presenter;
    private InputScreenshotAdapter adapter;
    private ActivityMainBinding binding;
+   private MessageDialog messageDialog;
 
    @Override
    protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       binding = ActivityMainBinding.inflate(getLayoutInflater());
       setContentView(binding.getRoot());
+      setPresenter(new StitchImgPresenter(this));
       initUI();
    }
 
@@ -68,6 +76,9 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       startActivityForResult(intent, REQUEST_CODE);
    }
 
+   public void stitchImages(View v){
+      presenter.stitchImages(null);
+   }
    @Override
    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
       List<String> imgPaths = new ArrayList<>();
@@ -130,5 +141,26 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
          if(adapter.isEmptyData())
             binding.emptyLayout.setVisibility(View.VISIBLE);
       }
+   }
+
+   @Override
+   public void onStitchImageSuccess(Bitmap img) {
+      Intent intent = new Intent(this, ResultActivity.class);
+      intent.putExtra("RESULT", img);
+      startActivity(intent);
+   }
+
+   @Override
+   public void onError(String msg) {
+      if (messageDialog == null)
+         messageDialog = new MessageDialog(this);
+
+      messageDialog.show("Error", msg, "Accept", null);
+   }
+
+   @SuppressLint("RestrictedApi")
+   @Override
+   public void setPresenter(StitchImgUseCase.Presenter presenter) {
+      this.presenter = checkNotNull(presenter);
    }
 }
