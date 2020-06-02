@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -28,11 +29,13 @@ import com.demo.autostitchscreenshot.utils.SpacingItemDecoration;
 import com.demo.autostitchscreenshot.view.adapter.InputScreenshotAdapter;
 import com.demo.autostitchscreenshot.view.dialog.MessageDialog;
 
-import static androidx.core.util.Preconditions.checkNotNull;
+import org.opencv.android.OpenCVLoader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static androidx.core.util.Preconditions.checkNotNull;
 import static com.demo.autostitchscreenshot.utils.Utils.getRealImagePathFromURI;
 
 public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer>, Callback.ItemTouchListener, StitchImgUseCase.View {
@@ -64,11 +67,11 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
 
    public void selectImage(View v) {
-      if(checkPermission())
+      if (checkPermission())
          sendIntentPickImg();
    }
 
-   private void sendIntentPickImg(){
+   private void sendIntentPickImg() {
       Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
       String[] mimeTypes = {"image/*"};
       intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -76,27 +79,29 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       startActivityForResult(intent, REQUEST_CODE);
    }
 
-   public void stitchImages(View v){
-      presenter.stitchImages(null);
+   public void stitchImages(View v) {
+      presenter.stitchImages();
    }
    @Override
    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
       List<String> imgPaths = new ArrayList<>();
       if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && null != data)
-            // When multiple images are selected.
-            if (data.getClipData() != null) {
-               ClipData clipData = data.getClipData();
-               for (int i = 0; i < clipData.getItemCount(); i++) {
-                  ClipData.Item item = clipData.getItemAt(i);
-                  Uri uri = item.getUri();
-                  String imgPath = getRealImagePathFromURI(uri, this);
-                  imgPaths.add(imgPath);
-               }
+         // When multiple images are selected.
+         if (data.getClipData() != null) {
+            ClipData clipData = data.getClipData();
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+               ClipData.Item item = clipData.getItemAt(i);
+               Uri uri = item.getUri();
+               String imgPath = getRealImagePathFromURI(uri, this);
+               imgPaths.add(imgPath);
             }
+         }
 
       if (imgPaths.size() > 0) {
+         Collections.sort(imgPaths);
          adapter.addData(imgPaths);
          binding.emptyLayout.setVisibility(View.GONE);
+         presenter.readSrc(imgPaths);
       }
       super.onActivityResult(requestCode, resultCode, data);
    }
@@ -111,13 +116,12 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
 
    @Override
-   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
-      switch (requestCode){
-         case REQUEST_CODE: {
-            if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-               sendIntentPickImg();
-            }
-            return;
+   public void onRequestPermissionsResult(int requestCode,
+                                          @NonNull String[] permissions,
+                                          @NonNull int[] grantResults) {
+      if (requestCode == REQUEST_CODE) {
+         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            sendIntentPickImg();
          }
       }
    }
@@ -130,15 +134,15 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    @Override
    public void swipe(int position, int direction) {
       adapter.removeItem(position);
-      if(adapter.isEmptyData())
+      if (adapter.isEmptyData())
          binding.emptyLayout.setVisibility(View.VISIBLE);
    }
 
    @Override
    public void run(String option, Integer index) {
-      if (option.equalsIgnoreCase(Constants.REMOVE)){
+      if (option.equalsIgnoreCase(Constants.REMOVE)) {
          adapter.removeItem(index);
-         if(adapter.isEmptyData())
+         if (adapter.isEmptyData())
             binding.emptyLayout.setVisibility(View.VISIBLE);
       }
    }
@@ -157,10 +161,36 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
 
       messageDialog.show("Error", msg, "Accept", null);
    }
+   @Override
+   public void showResult(Bitmap bitmap) {
+      binding.scrollViewResult.setVisibility(View.VISIBLE);
+      binding.resultImg.setImageBitmap(bitmap);
+      binding.listInput.setVisibility(View.GONE);
+   }
+
+   @Override
+   public void showProgress() {
+      binding.loader.setVisibility(View.VISIBLE);
+   }
+
+   @Override
+   public void hideProgress() {
+      binding.loader.setVisibility(View.GONE);
+   }
 
    @SuppressLint("RestrictedApi")
    @Override
    public void setPresenter(StitchImgUseCase.Presenter presenter) {
       this.presenter = checkNotNull(presenter);
+   }
+
+   @Override
+   protected void onResume() {
+      super.onResume();
+      boolean success = OpenCVLoader.initDebug();
+      if (!success)
+         Log.d("MainActivity", "Asynchronous initialization failed!");
+      else
+         Log.d("MainActivity", "Asynchronous initialization succeeded!");
    }
 }

@@ -31,19 +31,18 @@
             android:layout_width="@dimen/medium_img"
             android:layout_height="@dimen/medium_img"
             android:layout_marginHorizontal="@dimen/medium_space"
+            android:onClick="stitchImages"
             android:padding="@dimen/extra_small_space"
-            android:src="@drawable/ic_stitch"
-            android:onClick="stitchImages"/>
+            android:src="@drawable/ic_stitch" />
 
         <ImageView
             android:id="@+id/btn_add"
             android:layout_width="@dimen/medium_img"
             android:layout_height="@dimen/medium_img"
+            android:onClick="selectImage"
             android:padding="@dimen/extra_small_space"
-            android:src="@drawable/ic_add"
-            android:onClick="selectImage"/>
+            android:src="@drawable/ic_add" />
     </LinearLayout>
-
 
 
     <androidx.recyclerview.widget.RecyclerView
@@ -82,10 +81,33 @@
             android:textSize="@dimen/medium_size" />
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/test"
+    <ScrollView
+        android:id="@+id/scrollViewResult"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
-    </ImageView>
+        <ImageView
+            android:id="@+id/result_img"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/str_result"
+            android:scaleType="fitCenter" />
+    </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 </androidx.constraintlayout.widget.ConstraintLayout>
