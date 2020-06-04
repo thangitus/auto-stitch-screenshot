@@ -30,7 +30,9 @@ public class InputScreenshotAdapter extends RecyclerView.Adapter {
       this.callback = callback;
       data = new ArrayList<>();
    }
-
+   public void setData(List<String> data) {
+      this.data = data;
+   }
    @NonNull
    @Override
    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
-import android.util.TimingLogger;
 
 import androidx.core.util.Pair;
 
@@ -24,6 +23,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -230,5 +230,16 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          }
       }.run();
 
+   }
+
+   @Override
+   public void move(int fromPos, int toPos) {
+      await();
+      Collections.swap(src, fromPos, toPos);
+   }
+   @Override
+   public void delete(int position) {
+      await();
+      src.remove(position);
    }
 }
