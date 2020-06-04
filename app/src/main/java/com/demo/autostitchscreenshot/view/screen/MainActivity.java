@@ -16,6 +16,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    private InputScreenshotAdapter adapter;
    private ActivityMainBinding binding;
    private MessageDialog messageDialog;
+   private long startTime;
+   private long endTime;
 
    @Override
    protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
 
    public void stitchImages(View v) {
+      startTime = System.currentTimeMillis();
       presenter.stitchImages();
    }
    @Override
@@ -188,9 +192,12 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
    @Override
    public void showResult(Bitmap bitmap) {
+      endTime = System.currentTimeMillis();
       binding.scrollViewResult.setVisibility(View.VISIBLE);
       binding.resultImg.setImageBitmap(bitmap);
       binding.listInput.setVisibility(View.GONE);
+      Toast.makeText(this, (endTime - startTime) + " Millis", Toast.LENGTH_SHORT)
+           .show();
    }
 
    @Override
