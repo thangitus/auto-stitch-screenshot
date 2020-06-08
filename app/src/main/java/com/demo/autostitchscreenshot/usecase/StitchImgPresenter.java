@@ -44,6 +44,8 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private List<List<KeyPoint>> keypoints;
    private List<Mat> decryptions;
    private Handler handler;
+   private int minWidth;
+
    @SuppressLint({"RestrictedApi", "HandlerLeak"})
    public StitchImgPresenter(final StitchImgUseCase.View view) {
       this.view = checkNotNull(view);
@@ -79,7 +81,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
             keypoints = new ArrayList<>();
             decryptions = new ArrayList<>();
             List<Pair<Integer, Integer>> cut = new ArrayList<>();
-            final List<Mat> srcScaleAndGray = scaleAndGray(src);
+            final List<Mat> srcScaleAndGray = scaleAndGray();
             latch = new CountDownLatch(src.size());
             for (int i = 0; i < src.size(); i++) {
                final int finalI = i;
@@ -121,10 +123,16 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       }
    }
 
-   private List<Mat> scaleAndGray(List<Mat> src) {
+   private List<Mat> scaleAndGray() {
       List<Mat> res = new ArrayList<>();
-      for (Mat img : src) {
-         Size size = new Size(img.cols() * ratio_scale, img.rows() * ratio_scale);
+      for (int i = 0; i < src.size(); i++) {
+         Mat img = src.get(i);
+         float scale = (float) minWidth / src.get(i)
+                                             .cols();
+         Size size = new Size(img.cols() * scale, img.rows() * scale);
+         Imgproc.resize(img, img, size);
+
+         size.set(new double[]{img.cols() * ratio_scale, img.rows() * ratio_scale});
          Mat tmp = new Mat();
          Imgproc.cvtColor(img, tmp, Imgproc.COLOR_BGR2GRAY);
          Imgproc.resize(tmp, tmp, size);
@@ -217,14 +225,15 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    public void readSrc(final List<String> imgPaths) {
       src = new ArrayList<>();
       latch = new CountDownLatch(1);
+      minWidth = Integer.MAX_VALUE;
       new Runnable() {
          @Override
          public void run() {
             for (String file : imgPaths) {
                Mat img = Imgcodecs.imread(file);
                src.add(img);
-               if (ratio_scale == 1)
-                  ratio_scale = (float) 480 / img.cols();
+               minWidth = Math.min(minWidth, img.cols());
+               ratio_scale = (float) 480 / minWidth;
             }
             latch.countDown();
          }
