@@ -5,10 +5,10 @@
 5    android:versionName="3.4.3" >
 6
 7    <uses-sdk
-7-->D:\Fresher\autostitchscreenshot\openCVLibrary343\src\main\AndroidManifest.xml:7:5-47
+7-->/home/cpu11499-local/StitchScreenshot/autostitchscreenshot/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
 8        android:minSdkVersion="19"
-8-->D:\Fresher\autostitchscreenshot\openCVLibrary343\src\main\AndroidManifest.xml:7:5-47
+8-->/home/cpu11499-local/StitchScreenshot/autostitchscreenshot/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
 9        android:targetSdkVersion="28" />
-9-->D:\Fresher\autostitchscreenshot\openCVLibrary343\src\main\AndroidManifest.xml:7:15-44
+9-->/home/cpu11499-local/StitchScreenshot/autostitchscreenshot/openCVLibrary343/src/main/AndroidManifest.xml:7:15-44
 10
 11</manifest>

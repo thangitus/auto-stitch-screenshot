@@ -1,3 +1,4 @@
+include ':matisse'
 rootProject.name='AutoStitchScreenshot'
 include ':app'
 include ':openCVLibrary343'

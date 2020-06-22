@@ -6,6 +6,7 @@ import android.content.ClipData;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -34,6 +36,11 @@ import com.demo.autostitchscreenshot.utils.ItemTouchHelperCallback;
 import com.demo.autostitchscreenshot.utils.SpacingItemDecoration;
 import com.demo.autostitchscreenshot.view.adapter.InputScreenshotAdapter;
 import com.demo.autostitchscreenshot.view.dialog.MessageDialog;
+import com.zhihu.matisse.Matisse;
+import com.zhihu.matisse.MimeType;
+import com.zhihu.matisse.engine.impl.GlideEngine;
+import com.zhihu.matisse.filter.Filter;
+import com.zhihu.matisse.internal.entity.CaptureStrategy;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -46,6 +53,7 @@ import static androidx.core.util.Preconditions.checkNotNull;
 public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer>, Callback.ItemTouchListener, StitchImgUseCase.View {
    private static final String TAG = MainActivity.class.getSimpleName();
    private static final int REQUEST_CODE = 1;
+   private static final int REQUEST_CODE_CHOOSE =10 ;
 
    private StitchImgUseCase.Presenter presenter;
    private InputScreenshotAdapter adapter;
@@ -77,7 +85,22 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       if (checkPermission()) {
          binding.scrollViewResult.setVisibility(View.GONE);
          binding.listInput.setVisibility(View.VISIBLE);
-         sendIntentPickImg();
+//         sendIntentPickImg();
+         Matisse.from(MainActivity.this)
+                 .choose(MimeType.ofImage(), false)
+                 .countable(true)
+                 .capture(true)
+                 .captureStrategy(
+                         new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
+                 .maxSelectable(9)
+                 .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                 .thumbnailScale(0.85f)
+                 .imageEngine(new GlideEngine())
+                 .showSingleMediaType(true)
+                 .originalEnable(true)
+                 .maxOriginalSize(10)
+                 .autoHideToolbarOnSingleTap(true)
+                 .forResult(REQUEST_CODE_CHOOSE);
       }
    }
 
