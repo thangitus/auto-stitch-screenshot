@@ -27,6 +27,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.demo.autostitchscreenshot.R;
 import com.demo.autostitchscreenshot.databinding.ActivityMainBinding;
 import com.demo.autostitchscreenshot.usecase.StitchImgPresenter;
 import com.demo.autostitchscreenshot.usecase.StitchImgUseCase;
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
                  .captureStrategy(
                          new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
                  .maxSelectable(9)
+                 .theme(R.style.Matisse_Dracula)
                  .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
                  .thumbnailScale(0.85f)
                  .imageEngine(new GlideEngine())
