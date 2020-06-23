@@ -28,6 +28,12 @@
     <string name="button_ok">OK</string>
 
     <string name="error_over_count_default">You have reached max selectable</string>
+    <plurals name="error_over_count">
+        <item quantity="one">Можливо обрати не більше %1$d файла</item>
+        <item quantity="few">Можливо обрати не більше %1$d файлів</item>
+        <item quantity="many">Можливо обрати не більше %1$d файлів</item>
+        <item quantity="other">Можливо обрати не більше %1$d файлів</item>
+    </plurals>
     <string name="error_over_count">You can only select up to %1$d media files</string>
     <string name="error_under_quality">Under quality</string>
     <string name="error_over_quality">Over quality</string>
