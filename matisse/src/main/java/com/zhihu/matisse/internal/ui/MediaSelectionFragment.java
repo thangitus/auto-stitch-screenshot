@@ -36,6 +36,9 @@ import com.zhihu.matisse.internal.ui.adapter.AlbumMediaAdapter;
 import com.zhihu.matisse.internal.ui.widget.MediaGridInset;
 import com.zhihu.matisse.internal.utils.UIUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MediaSelectionFragment extends Fragment implements
         AlbumMediaCollection.AlbumMediaCallbacks, AlbumMediaAdapter.CheckStateListener,
         AlbumMediaAdapter.OnMediaClickListener {
@@ -48,12 +51,14 @@ public class MediaSelectionFragment extends Fragment implements
     private SelectionProvider mSelectionProvider;
     private AlbumMediaAdapter.CheckStateListener mCheckStateListener;
     private AlbumMediaAdapter.OnMediaClickListener mOnMediaClickListener;
+    private static SelectedItemCollection mSelectedCollection;
 
-    public static MediaSelectionFragment newInstance(Album album) {
+    public static MediaSelectionFragment newInstance(Album album, SelectedItemCollection mSelectedCollection) {
         MediaSelectionFragment fragment = new MediaSelectionFragment();
         Bundle args = new Bundle();
         args.putParcelable(EXTRA_ALBUM, album);
         fragment.setArguments(args);
+        MediaSelectionFragment.mSelectedCollection=mSelectedCollection;
         return fragment;
     }
 
@@ -85,6 +90,7 @@ public class MediaSelectionFragment extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerview);
     }
+
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -139,6 +145,8 @@ public class MediaSelectionFragment extends Fragment implements
 
     @Override
     public void onUpdate() {
+        Bundle bundle=mSelectedCollection.getDataWithBundle();
+        List<String> selectedPaths = mSelectedCollection.asListOfString();
         // notify outer Activity that check state changed
         if (mCheckStateListener != null) {
             mCheckStateListener.onUpdate();
