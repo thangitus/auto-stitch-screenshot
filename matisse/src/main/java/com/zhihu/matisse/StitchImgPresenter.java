@@ -1,14 +1,12 @@
 package com.zhihu.matisse;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
 import androidx.core.util.Pair;
 
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
@@ -65,12 +63,15 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                else
                   view.disableButtonStitch();
             }
+            if (msg.what == DONE)
+               view.returnFileName((String) msg.obj);
          }
       };
    }
 
    @Override
    public void stitchImages() {
+      view.disableButtonStitch();
       List<Mat> src = new ArrayList<>();
       for (String file : selectedPaths) {
          Mat mat = hashMapSrc.get(file);
@@ -105,45 +106,22 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       cut.set(0, new Pair<Integer, Integer>(0, 0));
 
       for (int i = 1; i < src.size(); i++) {
-         String key1, key2;
-         key1 = selectedPaths.get(i - 1) + selectedPaths.get(i);
-         key2 = selectedPaths.get(i) + selectedPaths.get(i - 1);
-         if (cache.containsKey(key1))
-            if (!cache.get(key1)) {
-               sendBitmapMessage(null);
-               return;
-            } else
-               continue;
-         if (cache.containsKey(key2))
-            if (!cache.get(key2)) {
-               sendBitmapMessage(null);
-               return;
-            } else
-               continue;
-
          Pair<Integer, Integer> cutObjectAndScene = getPairCut(decryptions.get(i - 1), keypoints.get(i - 1), decryptions.get(i), keypoints.get(i));
-         if (cutObjectAndScene.first == 0 || cutObjectAndScene.second == 0) {
-            sendBitmapMessage(null);
-            cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), false);
-            return;
-         }
-         cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), true);
-         cut.set(i - 1, new Pair<Integer, Integer>(cut.get(i - 1).first, cutObjectAndScene.first));
-         cut.add(new Pair<Integer, Integer>(cutObjectAndScene.second, height));
+         cut.set(i - 1, new Pair<>(cut.get(i - 1).first, cutObjectAndScene.first));
+         cut.add(new Pair<>(cutObjectAndScene.second, height));
       }
-      //      cropImg(cut, src);
-      //      Bitmap res = stitchImagesVertical(src);
-
-      Mat result = src.get(0);
-      Bitmap res = Bitmap.createBitmap(result.cols(), result.rows(), Bitmap.Config.ARGB_8888);
-      Utils.matToBitmap(result, res);
-      sendBitmapMessage(res);
-   }
-   private void sendBitmapMessage(Bitmap res) {
-      Message message = new Message();
-      message.what = DONE;
-      message.obj = res;
-      handler.sendMessage(message);
+      cropImg(cut, src);
+      Mat res = stitchImagesVertical(src);
+      String[] part = selectedPaths.get(0)
+                                   .split("/");
+      StringBuilder fileName = new StringBuilder();
+      for (int i = 1; i < part.length - 1; i++) {
+         fileName.append(part[i]);
+         fileName.append("/");
+      }
+      fileName.append("Result.jpg");
+      Imgcodecs.imwrite(fileName.toString(), res);
+      sendLocalPathMessage(fileName.toString());
    }
 
    private void await() {
@@ -186,13 +164,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       }
    }
 
-   private Bitmap stitchImagesVertical(List<Mat> src) {
+   private Mat stitchImagesVertical(List<Mat> src) {
       Mat result = new Mat();
       Core.vconcat(src, result);
-      Bitmap bitmap = Bitmap.createBitmap(result.cols(), result.rows(), Bitmap.Config.ARGB_8888);
-      Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2RGB);
-      Utils.matToBitmap(result, bitmap);
-      return bitmap;
+      return result;
    }
 
    private void detectAndCompute(Mat imgSrc, int index) {
@@ -354,4 +329,11 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       message.obj = b;
       handler.sendMessage(message);
    }
+   private void sendLocalPathMessage(String fileName) {
+      Message message = new Message();
+      message.what = DONE;
+      message.obj = fileName;
+      handler.sendMessage(message);
+   }
+
 }

@@ -21,5 +21,6 @@ public interface StitchImgUseCase {
 
       void hideProgress();
 
+      void returnFileName(String obj);
    }
 }

@@ -31,7 +31,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -51,7 +50,6 @@ import com.zhihu.matisse.internal.model.SelectedItemCollection;
 import com.zhihu.matisse.internal.ui.AlbumPreviewActivity;
 import com.zhihu.matisse.internal.ui.BasePreviewActivity;
 import com.zhihu.matisse.internal.ui.MediaSelectionFragment;
-import com.zhihu.matisse.internal.ui.SelectedPreviewActivity;
 import com.zhihu.matisse.internal.ui.adapter.AlbumMediaAdapter;
 import com.zhihu.matisse.internal.ui.adapter.AlbumsAdapter;
 import com.zhihu.matisse.internal.ui.widget.AlbumsSpinner;
@@ -63,8 +61,6 @@ import com.zhihu.matisse.internal.utils.PhotoMetadataUtils;
 import com.zhihu.matisse.internal.utils.SingleMediaScanner;
 
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.util.ArrayList;
 
@@ -244,7 +240,6 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
       }
    }
 
-
    private void updateOriginalState() {
       mOriginal.setChecked(mOriginalEnable);
       if (countOverMaxSize() > 0) {
@@ -287,21 +282,8 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
          result.putExtra(EXTRA_RESULT_ORIGINAL_ENABLE, mOriginalEnable);
          setResult(RESULT_OK, result);
          finish();
-      } else if (v.getId() == R.id.originalLayout) {
-         int count = countOverMaxSize();
-         if (count > 0) {
-            IncapableDialog incapableDialog = IncapableDialog.newInstance("", getString(R.string.error_over_original_count, count, mSpec.originalMaxSize));
-            incapableDialog.show(getSupportFragmentManager(), IncapableDialog.class.getName());
-            return;
-         }
-         mOriginalEnable = !mOriginalEnable;
-         mOriginal.setChecked(mOriginalEnable);
-
-         if (mSpec.onCheckedListener != null) {
-            mSpec.onCheckedListener.onCheck(mOriginalEnable);
-         }
       } else if (v.getId() == R.id.btn_stitch) {
-         Log.d(TAG, "onClick: Stitch");
+         presenter.stitchImages();
       }
    }
 
@@ -414,5 +396,13 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
    @Override
    public void hideProgress() {
 
+   }
+
+   @Override
+   public void returnFileName(String fileName) {
+      Intent result = new Intent();
+      result.putExtra("FileName", fileName);
+      setResult(RESULT_OK, result);
+      finish();
    }
 }

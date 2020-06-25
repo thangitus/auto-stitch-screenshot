@@ -27,6 +27,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.demo.autostitchscreenshot.R;
 import com.demo.autostitchscreenshot.databinding.ActivityMainBinding;
 import com.demo.autostitchscreenshot.usecase.StitchImgPresenter;
@@ -40,13 +42,11 @@ import com.demo.autostitchscreenshot.view.dialog.MessageDialog;
 import com.zhihu.matisse.Matisse;
 import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.engine.impl.GlideEngine;
-import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
 
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +56,7 @@ import static androidx.core.util.Preconditions.checkNotNull;
 public class MainActivity extends AppCompatActivity implements Callback.WithPair<String, Integer>, Callback.ItemTouchListener, StitchImgUseCase.View {
    private static final String TAG = MainActivity.class.getSimpleName();
    private static final int REQUEST_CODE = 1;
-   private static final int REQUEST_CODE_CHOOSE =10 ;
+   private static final int REQUEST_CODE_CHOOSE = 10;
 
    private StitchImgUseCase.Presenter presenter;
    private InputScreenshotAdapter adapter;
@@ -88,23 +88,22 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       if (checkPermission()) {
          binding.scrollViewResult.setVisibility(View.GONE);
          binding.listInput.setVisibility(View.VISIBLE);
-//         sendIntentPickImg();
+         //         sendIntentPickImg();
          Matisse.from(MainActivity.this)
-                 .choose(MimeType.ofImage(), false)
-                 .countable(true)
-                 .capture(true)
-                 .captureStrategy(
-                         new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
-                 .maxSelectable(9)
-                 .theme(R.style.Matisse_Dracula)
-                 .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                 .thumbnailScale(0.85f)
-                 .imageEngine(new GlideEngine())
-                 .showSingleMediaType(true)
-                 .originalEnable(true)
-                 .maxOriginalSize(10)
-                 .autoHideToolbarOnSingleTap(true)
-                 .forResult(REQUEST_CODE_CHOOSE);
+                .choose(MimeType.ofImage(), false)
+                .countable(true)
+                .capture(true)
+                .captureStrategy(new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
+                .maxSelectable(9)
+                .theme(R.style.Matisse_Dracula)
+                .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                .thumbnailScale(0.85f)
+                .imageEngine(new GlideEngine())
+                .showSingleMediaType(true)
+                .originalEnable(true)
+                .maxOriginalSize(10)
+                .autoHideToolbarOnSingleTap(true)
+                .forResult(REQUEST_CODE_CHOOSE);
       }
    }
 
@@ -123,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
    @Override
    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+      super.onActivityResult(requestCode, resultCode, data);
       List<String> imgPaths = new ArrayList<>();
       if (requestCode == REQUEST_CODE && resultCode == RESULT_OK && null != data)
          if (data.getData() != null) {
@@ -151,7 +151,19 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
          adapter.notifyDataSetChanged();
          presenter.readSrc(imgPaths);
       }
-      super.onActivityResult(requestCode, resultCode, data);
+
+      if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_CHOOSE) {
+         String fileName = data.getStringExtra("FileName");
+         Log.d(TAG, "onActivityResult: " + fileName);
+         binding.emptyLayout.setVisibility(View.GONE);
+         binding.scrollViewResult.setVisibility(View.VISIBLE);
+         binding.listInput.setVisibility(View.GONE);
+         Glide.with(this)
+              .load(new File(fileName))
+              .skipMemoryCache(true)
+              .diskCacheStrategy(DiskCacheStrategy.NONE)
+              .into(binding.resultImg);
+      }
    }
 
    private boolean checkPermission() {
