@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import androidx.core.util.Pair;
 
@@ -99,11 +100,11 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
             int height = srcScaleAndGray.get(0)
                                         .rows();
             cut.add(null);
-            cut.set(0, new Pair<Integer, Integer>(0, 0));
+            cut.set(0, new Pair<>(0, 0));
             for (int i = 1; i < src.size(); i++) {
                Pair<Integer, Integer> cutObjectAndScene = getPairCut(decryptions.get(i - 1), keypoints.get(i - 1), decryptions.get(i), keypoints.get(i));
-               cut.set(i - 1, new Pair<Integer, Integer>(cut.get(i - 1).first, cutObjectAndScene.first));
-               cut.add(new Pair<Integer, Integer>(cutObjectAndScene.second, height));
+               cut.set(i - 1, new Pair<>(cut.get(i - 1).first, cutObjectAndScene.first));
+               cut.add(new Pair<>(cutObjectAndScene.second, height));
             }
             cropImg(cut);
             Bitmap res = stitchImagesVertical(src);

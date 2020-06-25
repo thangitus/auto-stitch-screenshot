@@ -44,6 +44,8 @@ import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.internal.entity.CaptureStrategy;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -107,11 +109,6 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
    }
 
    private void sendIntentPickImg() {
-      //      Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-      //      String[] mimeTypes = {"image/*"};
-      //      intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-      //      intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-      //      startActivityForResult(intent, REQUEST_CODE);
       Intent intent = new Intent();
       intent.setType("image/*");
       intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -267,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
          else if (isDownloadsDocument(uri)) {
 
             final String id = DocumentsContract.getDocumentId(uri);
-            final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+            final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
 
             return getDataColumn(context, contentUri, null, null);
          }
