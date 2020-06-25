@@ -143,8 +143,6 @@ public class MediaSelectionFragment extends Fragment implements AlbumMediaCollec
 
    @Override
    public void onUpdate() {
-      long startTime = System.currentTimeMillis();
-
       Thread thread = new Thread(new Runnable() {
          @Override
          public void run() {
@@ -157,8 +155,6 @@ public class MediaSelectionFragment extends Fragment implements AlbumMediaCollec
       if (mCheckStateListener != null) {
          mCheckStateListener.onUpdate();
       }
-      long endTime = System.currentTimeMillis();
-      Log.d("MediaSelectionFragment", "onUpdate: " + (endTime - startTime));
    }
 
    @Override

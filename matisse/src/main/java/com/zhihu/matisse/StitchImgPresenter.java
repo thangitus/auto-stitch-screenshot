@@ -103,7 +103,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       int height = srcScaleAndGray.get(0)
                                   .rows();
       cut.add(null);
-      cut.set(0, new Pair<Integer, Integer>(0, 0));
+      cut.set(0, new Pair<>(0, 0));
 
       for (int i = 1; i < src.size(); i++) {
          Pair<Integer, Integer> cutObjectAndScene = getPairCut(decryptions.get(i - 1), keypoints.get(i - 1), decryptions.get(i), keypoints.get(i));
@@ -238,7 +238,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    @Override
    public void readSrc(final List<String> imgPaths) {
       selectedPaths = imgPaths;
-      long start = System.currentTimeMillis();
       for (String file : selectedPaths) {
          if (hashMapSrc.containsKey(file))
             continue;
@@ -248,7 +247,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          ratio_scale = (float) 480 / minWidth;
       }
       long end = System.currentTimeMillis();
-      Log.d(TAG, "readSrc: " + (end - start));
       checkStitch();
    }
 
@@ -302,8 +300,8 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
             return;
          }
          cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), true);
-         cut.set(i - 1, new Pair<Integer, Integer>(cut.get(i - 1).first, cutObjectAndScene.first));
-         cut.add(new Pair<Integer, Integer>(cutObjectAndScene.second, height));
+         cut.set(i - 1, new Pair<>(cut.get(i - 1).first, cutObjectAndScene.first));
+         cut.add(new Pair<>(cutObjectAndScene.second, height));
       }
       sendSuggest(true);
    }

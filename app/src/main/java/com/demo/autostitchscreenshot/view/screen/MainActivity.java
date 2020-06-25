@@ -154,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
 
       if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_CHOOSE) {
          String fileName = data.getStringExtra("FileName");
-         Log.d(TAG, "onActivityResult: " + fileName);
          binding.emptyLayout.setVisibility(View.GONE);
          binding.scrollViewResult.setVisibility(View.VISIBLE);
          binding.listInput.setVisibility(View.GONE);
