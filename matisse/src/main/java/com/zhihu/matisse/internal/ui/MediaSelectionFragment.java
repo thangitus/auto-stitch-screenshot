@@ -18,15 +18,18 @@ package com.zhihu.matisse.internal.ui;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.zhihu.matisse.R;
+import com.zhihu.matisse.StitchImgUseCase;
 import com.zhihu.matisse.internal.entity.Album;
 import com.zhihu.matisse.internal.entity.Item;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
@@ -36,132 +39,136 @@ import com.zhihu.matisse.internal.ui.adapter.AlbumMediaAdapter;
 import com.zhihu.matisse.internal.ui.widget.MediaGridInset;
 import com.zhihu.matisse.internal.utils.UIUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class MediaSelectionFragment extends Fragment implements
-        AlbumMediaCollection.AlbumMediaCallbacks, AlbumMediaAdapter.CheckStateListener,
-        AlbumMediaAdapter.OnMediaClickListener {
+public class MediaSelectionFragment extends Fragment implements AlbumMediaCollection.AlbumMediaCallbacks, AlbumMediaAdapter.CheckStateListener, AlbumMediaAdapter.OnMediaClickListener {
 
-    public static final String EXTRA_ALBUM = "extra_album";
+   public static final String EXTRA_ALBUM = "extra_album";
+   private static SelectedItemCollection mSelectedCollection;
+   private static StitchImgUseCase.Presenter presenter;
+   private final AlbumMediaCollection mAlbumMediaCollection = new AlbumMediaCollection();
+   private RecyclerView mRecyclerView;
+   private AlbumMediaAdapter mAdapter;
+   private SelectionProvider mSelectionProvider;
+   private AlbumMediaAdapter.CheckStateListener mCheckStateListener;
+   private AlbumMediaAdapter.OnMediaClickListener mOnMediaClickListener;
+   public static MediaSelectionFragment newInstance(Album album, SelectedItemCollection mSelectedCollection, StitchImgUseCase.Presenter presenter) {
+      MediaSelectionFragment.presenter = presenter;
+      MediaSelectionFragment fragment = new MediaSelectionFragment();
+      Bundle args = new Bundle();
+      args.putParcelable(EXTRA_ALBUM, album);
+      fragment.setArguments(args);
+      MediaSelectionFragment.mSelectedCollection = mSelectedCollection;
+      return fragment;
+   }
 
-    private final AlbumMediaCollection mAlbumMediaCollection = new AlbumMediaCollection();
-    private RecyclerView mRecyclerView;
-    private AlbumMediaAdapter mAdapter;
-    private SelectionProvider mSelectionProvider;
-    private AlbumMediaAdapter.CheckStateListener mCheckStateListener;
-    private AlbumMediaAdapter.OnMediaClickListener mOnMediaClickListener;
-    private static SelectedItemCollection mSelectedCollection;
+   @Override
+   public void onAttach(Context context) {
+      super.onAttach(context);
+      if (context instanceof SelectionProvider) {
+         mSelectionProvider = (SelectionProvider) context;
+      } else {
+         throw new IllegalStateException("Context must implement SelectionProvider.");
+      }
+      if (context instanceof AlbumMediaAdapter.CheckStateListener) {
+         mCheckStateListener = (AlbumMediaAdapter.CheckStateListener) context;
+      }
+      if (context instanceof AlbumMediaAdapter.OnMediaClickListener) {
+         mOnMediaClickListener = (AlbumMediaAdapter.OnMediaClickListener) context;
+      }
+   }
 
-    public static MediaSelectionFragment newInstance(Album album, SelectedItemCollection mSelectedCollection) {
-        MediaSelectionFragment fragment = new MediaSelectionFragment();
-        Bundle args = new Bundle();
-        args.putParcelable(EXTRA_ALBUM, album);
-        fragment.setArguments(args);
-        MediaSelectionFragment.mSelectedCollection=mSelectedCollection;
-        return fragment;
-    }
+   @Nullable
+   @Override
+   public View onCreateView(LayoutInflater inflater,
+                            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+      return inflater.inflate(R.layout.fragment_media_selection, container, false);
+   }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof SelectionProvider) {
-            mSelectionProvider = (SelectionProvider) context;
-        } else {
-            throw new IllegalStateException("Context must implement SelectionProvider.");
-        }
-        if (context instanceof AlbumMediaAdapter.CheckStateListener) {
-            mCheckStateListener = (AlbumMediaAdapter.CheckStateListener) context;
-        }
-        if (context instanceof AlbumMediaAdapter.OnMediaClickListener) {
-            mOnMediaClickListener = (AlbumMediaAdapter.OnMediaClickListener) context;
-        }
-    }
+   @Override
+   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+      super.onViewCreated(view, savedInstanceState);
+      mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerview);
+   }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_media_selection, container, false);
-    }
+   @Override
+   public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+      super.onActivityCreated(savedInstanceState);
+      Album album = getArguments().getParcelable(EXTRA_ALBUM);
 
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerview);
-    }
+      mAdapter = new AlbumMediaAdapter(getContext(), mSelectionProvider.provideSelectedItemCollection(), mRecyclerView);
+      mAdapter.registerCheckStateListener(this);
+      mAdapter.registerOnMediaClickListener(this);
+      mRecyclerView.setHasFixedSize(true);
 
+      int spanCount;
+      SelectionSpec selectionSpec = SelectionSpec.getInstance();
+      if (selectionSpec.gridExpectedSize > 0) {
+         spanCount = UIUtils.spanCount(getContext(), selectionSpec.gridExpectedSize);
+      } else {
+         spanCount = selectionSpec.spanCount;
+      }
+      mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Album album = getArguments().getParcelable(EXTRA_ALBUM);
+      int spacing = getResources().getDimensionPixelSize(R.dimen.media_grid_spacing);
+      mRecyclerView.addItemDecoration(new MediaGridInset(spanCount, spacing, false));
+      mRecyclerView.setAdapter(mAdapter);
+      mAlbumMediaCollection.onCreate(getActivity(), this);
+      mAlbumMediaCollection.load(album, selectionSpec.capture);
+   }
 
-        mAdapter = new AlbumMediaAdapter(getContext(),
-                mSelectionProvider.provideSelectedItemCollection(), mRecyclerView);
-        mAdapter.registerCheckStateListener(this);
-        mAdapter.registerOnMediaClickListener(this);
-        mRecyclerView.setHasFixedSize(true);
+   @Override
+   public void onDestroyView() {
+      super.onDestroyView();
+      mAlbumMediaCollection.onDestroy();
+   }
 
-        int spanCount;
-        SelectionSpec selectionSpec = SelectionSpec.getInstance();
-        if (selectionSpec.gridExpectedSize > 0) {
-            spanCount = UIUtils.spanCount(getContext(), selectionSpec.gridExpectedSize);
-        } else {
-            spanCount = selectionSpec.spanCount;
-        }
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
+   public void refreshMediaGrid() {
+      mAdapter.notifyDataSetChanged();
+   }
 
-        int spacing = getResources().getDimensionPixelSize(R.dimen.media_grid_spacing);
-        mRecyclerView.addItemDecoration(new MediaGridInset(spanCount, spacing, false));
-        mRecyclerView.setAdapter(mAdapter);
-        mAlbumMediaCollection.onCreate(getActivity(), this);
-        mAlbumMediaCollection.load(album, selectionSpec.capture);
-    }
+   public void refreshSelection() {
+      mAdapter.refreshSelection();
+   }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        mAlbumMediaCollection.onDestroy();
-    }
+   @Override
+   public void onAlbumMediaLoad(Cursor cursor) {
+      mAdapter.swapCursor(cursor);
+   }
 
-    public void refreshMediaGrid() {
-        mAdapter.notifyDataSetChanged();
-    }
+   @Override
+   public void onAlbumMediaReset() {
+      mAdapter.swapCursor(null);
+   }
 
-    public void refreshSelection() {
-        mAdapter.refreshSelection();
-    }
+   @Override
+   public void onUpdate() {
+      long startTime = System.currentTimeMillis();
 
-    @Override
-    public void onAlbumMediaLoad(Cursor cursor) {
-        mAdapter.swapCursor(cursor);
-    }
+      Thread thread = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            List<String> selectedPaths = mSelectedCollection.asListOfString();
+            presenter.readSrc(selectedPaths);
+         }
+      });
+      thread.start();
+      // notify outer Activity that check state changed
+      if (mCheckStateListener != null) {
+         mCheckStateListener.onUpdate();
+      }
+      long endTime = System.currentTimeMillis();
+      Log.d("MediaSelectionFragment", "onUpdate: " + (endTime - startTime));
+   }
 
-    @Override
-    public void onAlbumMediaReset() {
-        mAdapter.swapCursor(null);
-    }
+   @Override
+   public void onMediaClick(Album album, Item item, int adapterPosition) {
+      if (mOnMediaClickListener != null) {
+         mOnMediaClickListener.onMediaClick((Album) getArguments().getParcelable(EXTRA_ALBUM), item, adapterPosition);
+      }
+   }
 
-    @Override
-    public void onUpdate() {
-        Bundle bundle=mSelectedCollection.getDataWithBundle();
-        List<String> selectedPaths = mSelectedCollection.asListOfString();
-        // notify outer Activity that check state changed
-        if (mCheckStateListener != null) {
-            mCheckStateListener.onUpdate();
-        }
-    }
-
-    @Override
-    public void onMediaClick(Album album, Item item, int adapterPosition) {
-        if (mOnMediaClickListener != null) {
-            mOnMediaClickListener.onMediaClick((Album) getArguments().getParcelable(EXTRA_ALBUM),
-                    item, adapterPosition);
-        }
-    }
-
-    public interface SelectionProvider {
-        SelectedItemCollection provideSelectedItemCollection();
-    }
+   public interface SelectionProvider {
+      SelectedItemCollection provideSelectedItemCollection();
+   }
 }

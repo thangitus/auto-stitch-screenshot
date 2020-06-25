@@ -31,10 +31,18 @@ android {
     lintOptions {
         abortOnError false
     }
+    sourceSets {
+        main {
+            jni {
+                srcDirs 'app/src/main/jni', 'app/src/main/jniLibs/'
+            }
+        }
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(path: ':openCVLibrary343')
 
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation "androidx.annotation:annotation:1.1.0"
