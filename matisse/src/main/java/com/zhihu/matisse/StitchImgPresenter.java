@@ -3,7 +3,6 @@ package com.zhihu.matisse;
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 import androidx.core.util.Pair;
 
@@ -25,26 +24,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private static final String TAG = "StitchImgPresenter";
-   private static final float RATIO = 2;
    private static final float DEVIATION_X = 2;
    private static final float DEVIATION_Y = 100;
    private static final int DONE = 1010;
-   private static final int MIN_MATCH = 20;
+   private static final int MIN_MATCH = 30;
    private static final int CHECK = 11;
-
+   ExecutorService pool = Executors.newSingleThreadExecutor();
    private CountDownLatch latch;
    private HashMap<String, Mat> hashMapSrc;
    private HashMap<String, Boolean> cache;
    private List<String> selectedPaths;
+   private boolean flag = true;
    private float ratio_scale = 1;
    private List<List<KeyPoint>> keypoints;
    private List<Mat> decryptions;
    private Handler handler;
    private int minWidth;
    private StitchImgUseCase.View view;
+   private Runnable runnable = null;
    @SuppressLint({"RestrictedApi", "HandlerLeak"})
    public StitchImgPresenter(StitchImgUseCase.View view) {
       this.view = view;
@@ -62,9 +64,14 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                   view.enableButtonStitch();
                else
                   view.disableButtonStitch();
+               if (runnable != null)
+                  pool.submit(runnable);
             }
             if (msg.what == DONE)
                view.returnFileName((String) msg.obj);
+            // Check xem co can xu ly tiep k, neu can thi xu ly
+            // Neu runnable != null => Tao thread chay cai runnable nay
+            // Nho check synchronized.
          }
       };
    }
@@ -237,21 +244,34 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
 
    @Override
    public void readSrc(final List<String> imgPaths) {
-      selectedPaths = imgPaths;
-      for (String file : selectedPaths) {
-         if (hashMapSrc.containsKey(file))
-            continue;
-         Mat img = Imgcodecs.imread(file);
-         hashMapSrc.put(file, img);
-         minWidth = Math.min(minWidth, img.cols());
-         ratio_scale = (float) 480 / minWidth;
+      runnable = new Runnable() {
+         @Override
+         public void run() {
+            selectedPaths = imgPaths;
+            for (String file : selectedPaths) {
+               if (hashMapSrc.containsKey(file))
+                  continue;
+               Mat img = Imgcodecs.imread(file);
+               hashMapSrc.put(file, img);
+               minWidth = Math.min(minWidth, img.cols());
+               ratio_scale = (float) 480 / minWidth;
+            }
+            checkStitch();
+         }
+      };
+      if (flag) {
+         pool.submit(runnable);
+         runnable = null;
       }
-      long end = System.currentTimeMillis();
-      checkStitch();
    }
 
    @Override
    public void checkStitch() {
+      if (selectedPaths.size() < 2) {
+         view.disableButtonStitch();
+         return;
+      }
+      flag = false;
       List<Mat> src = new ArrayList<>();
       for (int i = 0; i < selectedPaths.size(); i++) {
          String currentFile = selectedPaths.get(i);
@@ -283,15 +303,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          thread.start();
       }
       await();
-      if (selectedPaths.size() < 2) {
-         view.disableButtonStitch();
-         return;
-      }
       int height = srcScaleAndGray.get(0)
                                   .rows();
       cut.add(null);
       cut.set(0, new Pair<>(0, 0));
-
       for (int i = 1; i < src.size(); i++) {
          Pair<Integer, Integer> cutObjectAndScene = getPairCut(decryptions.get(i - 1), keypoints.get(i - 1), decryptions.get(i), keypoints.get(i));
          if (cutObjectAndScene.first == 0 || cutObjectAndScene.second == 0) {
@@ -304,6 +319,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          cut.add(new Pair<>(cutObjectAndScene.second, height));
       }
       sendSuggest(true);
+      flag = true;
    }
 
    private boolean checkCache(String currentFile, String nextFile) {

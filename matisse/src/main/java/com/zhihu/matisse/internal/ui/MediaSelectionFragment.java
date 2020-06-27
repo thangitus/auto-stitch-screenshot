@@ -18,7 +18,6 @@ package com.zhihu.matisse.internal.ui;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +43,7 @@ import java.util.List;
 public class MediaSelectionFragment extends Fragment implements AlbumMediaCollection.AlbumMediaCallbacks, AlbumMediaAdapter.CheckStateListener, AlbumMediaAdapter.OnMediaClickListener {
 
    public static final String EXTRA_ALBUM = "extra_album";
+   private static final String TAG = "MediaSelectionFragment";
    private static SelectedItemCollection mSelectedCollection;
    private static StitchImgUseCase.Presenter presenter;
    private final AlbumMediaCollection mAlbumMediaCollection = new AlbumMediaCollection();
@@ -143,14 +143,8 @@ public class MediaSelectionFragment extends Fragment implements AlbumMediaCollec
 
    @Override
    public void onUpdate() {
-      Thread thread = new Thread(new Runnable() {
-         @Override
-         public void run() {
-            List<String> selectedPaths = mSelectedCollection.asListOfString();
-            presenter.readSrc(selectedPaths);
-         }
-      });
-      thread.start();
+      List<String> selectedPaths = mSelectedCollection.asListOfString();
+      presenter.readSrc(selectedPaths);
       // notify outer Activity that check state changed
       if (mCheckStateListener != null) {
          mCheckStateListener.onUpdate();

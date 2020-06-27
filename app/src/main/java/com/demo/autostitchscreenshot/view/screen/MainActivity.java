@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
                 .countable(true)
                 .capture(true)
                 .captureStrategy(new CaptureStrategy(true, "com.zhihu.matisse.sample.fileprovider", "test"))
-                .maxSelectable(9)
+                .maxSelectable(12)
                 .theme(R.style.Matisse_Dracula)
                 .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
                 .thumbnailScale(0.85f)
