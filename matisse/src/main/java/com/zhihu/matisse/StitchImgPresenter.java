@@ -64,6 +64,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                   view.enableButtonStitch();
                else
                   view.disableButtonStitch();
+
                if (runnable != null)
                   pool.submit(runnable);
             }
@@ -319,7 +320,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          cut.add(new Pair<>(cutObjectAndScene.second, height));
       }
       sendSuggest(true);
-      flag = true;
    }
 
    private boolean checkCache(String currentFile, String nextFile) {
@@ -338,6 +338,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       return true;
    }
    private void sendSuggest(boolean b) {
+      flag = true;
       Message message = new Message();
       message.what = CHECK;
       message.obj = b;
