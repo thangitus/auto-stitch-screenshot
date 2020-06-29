@@ -77,4 +77,15 @@
             android:textSize="16sp" />
 
     </FrameLayout>
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_centerVertical="true"
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        style="@android:style/Widget.DeviceDefault.ProgressBar.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:indeterminate="true"
+        android:visibility="gone"/>
 </RelativeLayout>
