@@ -3,6 +3,7 @@ package com.zhihu.matisse;
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import androidx.core.util.Pair;
 
@@ -35,9 +36,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private static final int MIN_MATCH = 30;
    private static final int CHECK = 11;
    ExecutorService pool = Executors.newSingleThreadExecutor();
+   ExecutorService poolDetect = Executors.newFixedThreadPool(3);
    private CountDownLatch latch;
    private HashMap<String, Mat> hashMapSrc;
-   private HashMap<String, Boolean> cache;
+   private HashMap<String, CACHE_TYPE> cache;
    private List<String> selectedPaths;
    private boolean flag = true;
    private float ratio_scale = 1;
@@ -47,6 +49,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private int minWidth;
    private StitchImgUseCase.View view;
    private Runnable runnable = null;
+
    @SuppressLint({"RestrictedApi", "HandlerLeak"})
    public StitchImgPresenter(StitchImgUseCase.View view) {
       this.view = view;
@@ -68,18 +71,17 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                if (runnable != null)
                   pool.submit(runnable);
             }
-            if (msg.what == DONE)
+            if (msg.what == DONE) {
+               view.hideProgress();
                view.returnFileName((String) msg.obj);
-            // Check xem co can xu ly tiep k, neu can thi xu ly
-            // Neu runnable != null => Tao thread chay cai runnable nay
-            // Nho check synchronized.
+            }
          }
       };
    }
-
    @Override
    public void stitchImages() {
       view.disableButtonStitch();
+      view.showProgress();
       List<Mat> src = new ArrayList<>();
       for (String file : selectedPaths) {
          Mat mat = hashMapSrc.get(file);
@@ -129,6 +131,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       }
       fileName.append("Result.jpg");
       Imgcodecs.imwrite(fileName.toString(), res);
+
       sendLocalPathMessage(fileName.toString());
    }
 
@@ -139,7 +142,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          e.printStackTrace();
       }
    }
-
    private List<Mat> scaleAndGray(List<Mat> src) {
       List<Mat> res = new ArrayList<>();
       for (int i = 0; i < src.size(); i++) {
@@ -171,13 +173,11 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          src.set(i, new Mat(img, roi));
       }
    }
-
    private Mat stitchImagesVertical(List<Mat> src) {
       Mat result = new Mat();
       Core.vconcat(src, result);
       return result;
    }
-
    private void detectAndCompute(Mat imgSrc, int index) {
       FastFeatureDetector detector = FastFeatureDetector.create();
       ORB extractor = ORB.create();
@@ -268,22 +268,43 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
 
    @Override
    public void checkStitch() {
-      if (selectedPaths.size() < 2) {
-         view.disableButtonStitch();
+      flag = false;
+      if (this.selectedPaths.size() < 2) {
+         sendSuggest(false);
          return;
       }
-      flag = false;
-      List<Mat> src = new ArrayList<>();
-      for (int i = 0; i < selectedPaths.size(); i++) {
-         String currentFile = selectedPaths.get(i);
-         if (i < selectedPaths.size() - 1) {
-            String nextFile = selectedPaths.get(i + 1);
-            if (!checkCache(currentFile, nextFile))
+      List<String> selectedPaths = new ArrayList<>();
+      for (int i = 0; i < this.selectedPaths.size(); i++) {
+         String currentFile = this.selectedPaths.get(i);
+         if (i < this.selectedPaths.size() - 1) {
+            String nextFile = this.selectedPaths.get(i + 1);
+            CACHE_TYPE cacheType = checkCache(currentFile, nextFile);
+            if (cacheType == CACHE_TYPE.FALSE) {
                sendSuggest(false);
+               return;
+            } else if (cacheType == CACHE_TYPE.TRUE)
+               if (i == 0)
+                  continue;
+               else if (checkCache(this.selectedPaths.get(i - 1), currentFile) == CACHE_TYPE.TRUE)
+                  continue;
          }
+         if (i > 0 && i == this.selectedPaths.size() - 1 && checkCache(this.selectedPaths.get(i - 1), currentFile) == CACHE_TYPE.TRUE)
+            continue;
+
+         selectedPaths.add(currentFile);
+      }
+      if (selectedPaths.size() == 0) {
+         sendSuggest(true);
+         return;
+      }
+      if (selectedPaths.size() == 1) {
+         sendSuggest(false);
+         return;
+      }
+      List<Mat> src = new ArrayList<>();
+      for (String currentFile : selectedPaths) {
          Mat mat = hashMapSrc.get(currentFile);
-         if (mat != null)
-            src.add(mat);
+         src.add(mat);
       }
 
       keypoints = new ArrayList<>();
@@ -293,7 +314,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       latch = new CountDownLatch(src.size());
       for (int i = 0; i < src.size(); i++) {
          final int finalI = i;
-         Thread thread = new Thread(new Runnable() {
+         poolDetect.submit(new Runnable() {
             @Override
             public void run() {
                keypoints.add(null);
@@ -301,7 +322,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                detectAndCompute(srcScaleAndGray.get(finalI), finalI);
             }
          });
-         thread.start();
       }
       await();
       int height = srcScaleAndGray.get(0)
@@ -312,30 +332,26 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          Pair<Integer, Integer> cutObjectAndScene = getPairCut(decryptions.get(i - 1), keypoints.get(i - 1), decryptions.get(i), keypoints.get(i));
          if (cutObjectAndScene.first == 0 || cutObjectAndScene.second == 0) {
             sendSuggest(false);
-            cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), false);
+            cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), CACHE_TYPE.FALSE);
             return;
          }
-         cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), true);
+         cache.put(selectedPaths.get(i - 1) + selectedPaths.get(i), CACHE_TYPE.TRUE);
          cut.set(i - 1, new Pair<>(cut.get(i - 1).first, cutObjectAndScene.first));
          cut.add(new Pair<>(cutObjectAndScene.second, height));
       }
       sendSuggest(true);
    }
 
-   private boolean checkCache(String currentFile, String nextFile) {
+   private CACHE_TYPE checkCache(String currentFile, String nextFile) {
       if (cache.containsKey(currentFile + nextFile))
-         if (!cache.get(currentFile + nextFile)) {
-            sendSuggest(false);
-            return false;
-         } else
-            return true;
-      if (cache.containsKey(nextFile + currentFile))
-         if (!cache.get(nextFile + currentFile)) {
-            sendSuggest(false);
-            return false;
-         }
+         if (cache.get(currentFile + nextFile) == CACHE_TYPE.TRUE)
+            return CACHE_TYPE.TRUE;
+         else
+            return CACHE_TYPE.FALSE;
+      //      if (cache.containsKey(nextFile + currentFile))
+      //         return cache.get(nextFile + currentFile);
 
-      return true;
+      return CACHE_TYPE.NOT_EXIST;
    }
    private void sendSuggest(boolean b) {
       flag = true;
@@ -349,6 +365,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       message.what = DONE;
       message.obj = fileName;
       handler.sendMessage(message);
+   }
+
+   private enum CACHE_TYPE {
+      TRUE, FALSE, NOT_EXIST;
    }
 
 }
