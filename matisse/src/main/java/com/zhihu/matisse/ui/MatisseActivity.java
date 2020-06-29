@@ -31,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -87,8 +88,8 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
    private View mContainer;
    private View mEmptyView;
    private ImageView buttonStitch;
+   private ProgressBar progressBar;
 
-   private CheckRadioView mOriginal;
    private boolean mOriginalEnable;
 
    private StitchImgUseCase.Presenter presenter;
@@ -133,7 +134,7 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
       mContainer = findViewById(R.id.container);
       mEmptyView = findViewById(R.id.empty_view);
       buttonStitch.setOnClickListener(this);
-      mOriginal = findViewById(R.id.original);
+      progressBar = findViewById(R.id.loader);
       disableButtonStitch();
       mSelectedCollection.onCreate(savedInstanceState);
       if (savedInstanceState != null) {
@@ -240,20 +241,6 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
       }
    }
 
-   private void updateOriginalState() {
-      mOriginal.setChecked(mOriginalEnable);
-      if (countOverMaxSize() > 0) {
-
-         if (mOriginalEnable) {
-            IncapableDialog incapableDialog = IncapableDialog.newInstance("", getString(R.string.error_over_original_size, mSpec.originalMaxSize));
-            incapableDialog.show(getSupportFragmentManager(), IncapableDialog.class.getName());
-
-            mOriginal.setChecked(false);
-            mOriginalEnable = false;
-         }
-      }
-   }
-
    private int countOverMaxSize() {
       int count = 0;
       int selectedCount = mSelectedCollection.count();
@@ -273,18 +260,8 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
 
    @Override
    public void onClick(View v) {
-      if (v.getId() == R.id.button_apply) {
-         Intent result = new Intent();
-         ArrayList<Uri> selectedUris = (ArrayList<Uri>) mSelectedCollection.asListOfUri();
-         result.putParcelableArrayListExtra(EXTRA_RESULT_SELECTION, selectedUris);
-         ArrayList<String> selectedPaths = (ArrayList<String>) mSelectedCollection.asListOfString();
-         result.putStringArrayListExtra(EXTRA_RESULT_SELECTION_PATH, selectedPaths);
-         result.putExtra(EXTRA_RESULT_ORIGINAL_ENABLE, mOriginalEnable);
-         setResult(RESULT_OK, result);
-         finish();
-      } else if (v.getId() == R.id.btn_stitch) {
+      if (v.getId() == R.id.btn_stitch)
          presenter.stitchImages();
-      }
    }
 
    @Override
@@ -380,22 +357,19 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
 
    @Override
    public void enableButtonStitch() {
-      buttonStitch.setAlpha(1f);
-      buttonStitch.setClickable(true);
       buttonStitch.setVisibility(View.VISIBLE);
    }
    @Override
    public void disableButtonStitch() {
-      buttonStitch.setAlpha(0.5f);
-      buttonStitch.setClickable(false);
+      buttonStitch.setVisibility(View.GONE);
    }
    @Override
    public void showProgress() {
-
+      progressBar.setVisibility(View.VISIBLE);
    }
    @Override
    public void hideProgress() {
-
+      progressBar.setVisibility(View.GONE);
    }
 
    @Override
