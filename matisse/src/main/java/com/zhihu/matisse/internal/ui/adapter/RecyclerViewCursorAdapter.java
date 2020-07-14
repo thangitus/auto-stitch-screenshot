@@ -49,8 +49,6 @@ public abstract class RecyclerViewCursorAdapter<VH extends RecyclerView.ViewHold
       if (!mCursor.moveToPosition(position)) {
          throw new IllegalStateException("Could not move cursor to position " + position + " when trying to get item view type.");
       }
-      Log.d("RecyclerView", "getPosition: "+mCursor.getPosition());
-      Log.d("RecyclerView", "getCount: "+mCursor.getCount());
       return getItemViewType(position, mCursor);
    }
 

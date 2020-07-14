@@ -245,27 +245,28 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
 
    @Override
    public void readSrc(final List<String> imgPaths) {
-      runnable = new Runnable() {
-         @Override
-         public void run() {
-            selectedPaths = imgPaths;
-            for (String file : selectedPaths) {
-               if (hashMapSrc.containsKey(file))
-                  continue;
-               Mat img = Imgcodecs.imread(file);
-               hashMapSrc.put(file, img);
-               minWidth = Math.min(minWidth, img.cols());
-               ratio_scale = (float) 480 / minWidth;
-            }
-            checkStitch();
-         }
-      };
-      if (flag) {
-         pool.submit(runnable);
-         runnable = null;
-      }
+      //      runnable = new Runnable() {
+      //         @Override
+      //         public void run() {
+      //            selectedPaths = imgPaths;
+      //            for (String file : selectedPaths) {
+      //               if (hashMapSrc.containsKey(file))
+      //                  continue;
+      //               Mat img = Imgcodecs.imread(file);
+      //               hashMapSrc.put(file, img);
+      //               minWidth = Math.min(minWidth, img.cols());
+      //               ratio_scale = (float) 480 / minWidth;
+      //            }
+      //            checkStitch();
+      //         }
+      //      };
+      //      if (flag) {
+      //         pool.submit(runnable);
+      //         runnable = null;
+      //      }
+      Log.d(TAG, "C_readSrc: " + canny(imgPaths.get(0)));
    }
-
+   public native int canny(String src);
    @Override
    public void checkStitch() {
       flag = false;

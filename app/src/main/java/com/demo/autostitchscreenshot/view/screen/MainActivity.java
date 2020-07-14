@@ -249,19 +249,6 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       this.presenter = checkNotNull(presenter);
    }
 
-   @Override
-   protected void onResume() {
-      super.onResume();
-//      OpenCVLoader.initDebug();
-//      loadLibrary("opencv_java3");
-      loadLibrary("opencv_core");
-      loadLibrary("opencv_flann");
-      loadLibrary("opencv_imgproc");
-      loadLibrary("opencv_features2d");
-      loadLibrary("opencv_imgcodecs");
-      loadLibrary("opencv_highgui");
-   }
-
    private String getPath(final Context context, final Uri uri) {
 
       final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -346,19 +333,14 @@ public class MainActivity extends AppCompatActivity implements Callback.WithPair
       return "com.android.providers.media.documents".equals(uri.getAuthority());
    }
 
-   private static boolean loadLibrary(String Name) {
-      boolean result = true;
-
-      Log.d(TAG, "Trying to load library " + Name);
+   static {
+      Log.d(TAG, "Trying to load native-lib");
       try {
-         System.loadLibrary(Name);
-         Log.d(TAG, "Library " + Name + " loaded");
+         System.loadLibrary("native-lib");
+         Log.d(TAG, "Library native-lib loaded");
       } catch (UnsatisfiedLinkError e) {
-         Log.d(TAG, "Cannot load library \"" + Name + "\"");
+         Log.d(TAG, "Cannot load library native-lib");
          e.printStackTrace();
-         result = false;
       }
-
-      return result;
    }
 }
