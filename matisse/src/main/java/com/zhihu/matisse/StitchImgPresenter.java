@@ -264,7 +264,12 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       //         pool.submit(runnable);
       //         runnable = null;
       //      }
-      Log.d(TAG, "C_readSrc: " + canny(imgPaths.get(0)));
+      pool.submit(new Runnable() {
+         @Override
+         public void run() {
+            Log.d(TAG, "C_readSrc: " + canny(imgPaths.get(0)));
+         }
+      });
    }
    public native int canny(String src);
    @Override
