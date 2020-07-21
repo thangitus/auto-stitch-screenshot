@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-add_library(native-lib SHARED native-lib.cpp)
+add_library(native-lib SHARED stitch_img.cpp)
 
-find_library(jnigraphics-lib jnigraphics)
 find_library(log-lib log)
 
 # Configure OpenCV
@@ -23,4 +22,15 @@ set_target_properties(cv_imgcodecs-lib
         PROPERTIES IMPORTED_LOCATION
         ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_imgcodecs.so)
 
-target_link_libraries(native-lib ${jnigraphics-lib} ${log-lib} cv_core-lib cv_imgproc-lib cv_imgcodecs-lib)
+add_library(cv_features2d-lib SHARED IMPORTED)
+set_target_properties(cv_features2d-lib
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_features2d.so)
+
+add_library(cv_flann-lib SHARED IMPORTED)
+set_target_properties(cv_flann-lib
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_flann.so)
+
+target_link_libraries(native-lib ${log-lib} cv_core-lib
+        cv_imgproc-lib cv_imgcodecs-lib cv_features2d-lib cv_flann-lib)

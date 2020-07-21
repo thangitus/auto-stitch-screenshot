@@ -144,7 +144,7 @@ public class MediaSelectionFragment extends Fragment implements AlbumMediaCollec
    @Override
    public void onUpdate() {
       List<String> selectedPaths = mSelectedCollection.asListOfString();
-      presenter.readSrc(selectedPaths);
+      presenter.onUpdateSelectedPaths(selectedPaths);
       // notify outer Activity that check state changed
       if (mCheckStateListener != null) {
          mCheckStateListener.onUpdate();

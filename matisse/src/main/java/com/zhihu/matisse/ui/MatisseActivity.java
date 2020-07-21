@@ -260,8 +260,8 @@ public class MatisseActivity extends AppCompatActivity implements AlbumCollectio
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btn_stitch)
-            presenter.stitchImages();
+//        if (v.getId() == R.id.btn_stitch)
+//            presenter.stitchImages();
     }
 
     @Override

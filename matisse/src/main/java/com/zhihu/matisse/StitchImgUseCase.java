@@ -5,11 +5,8 @@ import java.util.List;
 public interface StitchImgUseCase {
    interface Presenter {
 
-      void stitchImages();
 
-      void readSrc(List<String> imgPaths);
-
-      void checkStitch();
+      void onUpdateSelectedPaths(List<String> selectedPaths);
    }
 
    interface View {
