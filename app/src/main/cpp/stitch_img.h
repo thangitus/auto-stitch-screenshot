@@ -25,6 +25,7 @@ using namespace cv;
 
 struct MatchDetail {
     int img1, img2;
+    int rowImg1, rowImg2;
     int numberMatch;
 };
 struct NODE {
@@ -36,23 +37,15 @@ struct NODE {
 void detectAndCompute(Mat imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
                       int index);
 
-void detectAndWrite(vector<Mat> src);
-
 vector<Mat> scaleAndGray(vector<Mat> &src);
-
-pair<int, int>
-getPairCutRow(Mat descriptors_object, vector<KeyPoint> &keypoints_object, Mat descriptors_scene,
-              vector<KeyPoint> &keypoints_scene, int &numberKeyPointMatch);
 
 void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_object,
                         Mat descriptors_scene,
                         vector<KeyPoint> &keypoints_scene, MatchDetail &matchDetail);
 
-vector<DMatch>
-getDMatch(Mat descriptors_object, vector<KeyPoint> &keypoints_object, Mat descriptors_scene,
-          vector<KeyPoint> &keypoints_scene);
+jobject mat_to_bitmap(JNIEnv *env, Mat &src);
 
-vector<Mat> cropImg(vector<Mat> src, vector<pair<int, int> > row);
+void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails);
 
 Mat stitchImagesVertical(vector<Mat> src);
 
@@ -74,7 +67,7 @@ computeOrder(unsigned int size, vector<MatchDetail> matchList);
 
 bool compareMatch(MatchDetail matchDetail1, MatchDetail matchDetail2);
 
-void prepare(const vector<string> &paths, vector<Mat> &src, vector<Mat> &srcScaleAndGray,
+void prepare(const vector<string> &paths, vector<Mat> &src,
              vector<vector<KeyPoint>> &keypoints, vector<Mat> &decryptions);
 
 #endif //AUTOSTITCHSCREENSHOT_STITCH_IMG_H

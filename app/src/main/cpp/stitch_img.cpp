@@ -18,7 +18,7 @@ const int MIN_MATCH = 30;
 
 float ratio_scale = 1;
 int minWidth = INT_MAX;
-unordered_map<string, int> cacheNumberKeyPointMatch;
+unordered_map<string, MatchDetail> cacheMatchDetail;
 vector<int> order;
 
 using namespace std::chrono;
@@ -34,9 +34,76 @@ Java_com_zhihu_matisse_StitchImgPresenter_checkNativeStitch(JNIEnv *env, jobject
 
     if (paths.size() < 2)
         return false;
-    else if (paths.size() < 5)
+    else if (paths.size() < 5) {
+        order.clear();
         return checkSmallSize(paths);
-    else return checkLargeSize(paths);
+    } else return checkLargeSize(paths);
+}
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz,
+                                                       jobjectArray selected_paths) {
+    vector<string> paths = objectArrayToVectorString(env, selected_paths);
+    readImg(paths);
+    if (!order.empty() && paths.size() < 5) {
+        vector<string> tmp;
+        tmp.reserve(order.size());
+        for (int i:order)
+            tmp.push_back(paths[i]);
+        paths = tmp;
+    } else sort(paths.begin(), paths.end());
+
+    vector<Mat> src;
+    vector<vector<KeyPoint>> keypoints(paths.size());
+    vector<Mat> decryptions(paths.size());
+    prepare(paths, src, keypoints, decryptions);
+    vector<MatchDetail> matchDetails;
+    for (int i = 1; i < src.size(); i++) {
+        MatchDetail tmp{i - 1, i, 0, 0, 0};
+//        if (cacheMatchDetail.find(paths[i - 1] + paths[i]) != cacheMatchDetail.end()) {
+//            tmp = cacheMatchDetail[paths[i - 1] + paths[i]];
+//            matchDetails.push_back(tmp);
+//            string msg = "cache" + to_string(i - 1) + to_string(i);
+//            __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s", msg.c_str());
+//            continue;
+//        }
+        computeMatchDetail(decryptions[i - 1], keypoints[i - 1], decryptions[i], keypoints[i], tmp);
+        matchDetails.push_back(tmp);
+    }
+    cropImg(src, matchDetails);
+    Mat res = stitchImagesVertical(src);
+    jobject bitmap = mat_to_bitmap(env, res);
+    return bitmap;
+}
+
+void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails) {
+    vector<Mat> res;
+    vector<pair<int, int>> rowCutImgs(src.size());
+    int height = src[0].rows;
+
+    rowCutImgs[0].first = 0;
+    rowCutImgs[rowCutImgs.size() - 1].second = height;
+    for (int i = 0; i < matchDetails.size(); i++) {
+        rowCutImgs[i].second = matchDetails[i].rowImg1 / ratio_scale;
+        rowCutImgs[i + 1].first = matchDetails[i].rowImg2 / ratio_scale;
+    }
+
+    for (int i = 0; i < src.size(); i++) {
+        int top = rowCutImgs[i].first;
+        int bottom = rowCutImgs[i].second - rowCutImgs[i].first;
+        int width = src[i].cols;
+        if (top + bottom > height)
+            bottom = height - top;
+        cv::Rect roi(0, top, width, bottom);
+        res.push_back(src[i](roi));
+    }
+    src = res;
+}
+
+Mat stitchImagesVertical(vector<Mat> src) {
+    Mat res;
+    vconcat(src, res);
+    return res;
 }
 
 void logTime(string msg) {
@@ -79,52 +146,6 @@ vector<Mat> scaleAndGray(vector<Mat> &src) {
     return res;
 }
 
-pair<int, int>
-getPairCutRow(Mat descriptors_object, vector<KeyPoint> &keypoints_object, Mat descriptors_scene,
-              vector<KeyPoint> &keypoints_scene, int &numberKeyPointMatch) {
-    BFMatcher matcher;
-    vector<DMatch> good_matches, matches;
-    unordered_map<int, int> parallel;
-    matcher.match(descriptors_object, descriptors_scene, matches);
-
-    int maxFrequency, rowChoiceObject, rowChoiceScene;
-    maxFrequency = rowChoiceObject = rowChoiceScene = 0;
-    int sub;
-    for (DMatch matche : matches) {
-        if (abs(keypoints_object[matche.queryIdx].pt.x - keypoints_scene[matche.trainIdx].pt.x) <=
-            DEVIATION_X) {
-            sub = keypoints_object[matche.queryIdx].pt.y - keypoints_scene[matche.trainIdx].pt.y;
-            if (sub > DEVIATION_Y) {
-                int count;
-                if (parallel.find(sub) == parallel.end())
-                    count = parallel[sub] = 1;
-                else
-                    count = ++parallel[sub];
-                maxFrequency = count > maxFrequency ? count : maxFrequency;
-                good_matches.push_back(matche);
-            }
-        }
-
-    }
-    int flag, count;
-    flag = count = 0;
-    for (DMatch matche : good_matches) {
-        sub = keypoints_object[matche.queryIdx].pt.y - keypoints_scene[matche.trainIdx].pt.y;
-        if (parallel[sub] == maxFrequency) {
-            if (flag == 0) {
-                flag = sub;
-                count++;
-            } else if (flag == sub) {
-                rowChoiceObject = keypoints_object[matche.queryIdx].pt.y;
-                rowChoiceScene = keypoints_scene[matche.trainIdx].pt.y;
-                count++;
-            }
-        }
-    }
-    numberKeyPointMatch = count;
-    return make_pair(rowChoiceObject, rowChoiceScene);
-}
-
 void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_object,
                         Mat descriptors_scene,
                         vector<KeyPoint> &keypoints_scene, MatchDetail &matchDetail) {
@@ -149,14 +170,24 @@ void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_obje
 
                 if (count > maxFrequency) {
                     maxFrequency = count;
+                    good_matches.push_back(match);
                     isSwap = distanceY < 0;
                 }
             }
         }
     }
-    if (isSwap)
+    if (isSwap) {
         swap(matchDetail.img1, matchDetail.img2);
+    }
     matchDetail.numberMatch = maxFrequency;
+
+    for (DMatch match : good_matches) {
+        int sub = keypoints_object[match.queryIdx].pt.y - keypoints_scene[match.trainIdx].pt.y;
+        if (parallel[sub] == maxFrequency) {
+            matchDetail.rowImg1 = keypoints_object[match.queryIdx].pt.y;
+            matchDetail.rowImg2 = keypoints_scene[match.trainIdx].pt.y;
+        }
+    }
 }
 
 void readImg(const vector<string> &selected_paths) {
@@ -190,13 +221,11 @@ bool checkLargeSize(vector<string> &paths) {
     else if (paths.empty())
         return true;
     vector<Mat> src;
-    vector<Mat> srcScaleAndGray;
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
-    prepare(paths, src, srcScaleAndGray, keypoints, decryptions);
-
-    for (int i = 1; i < srcScaleAndGray.size(); i++) {
-        MatchDetail matchDetail{i - 1, i, 0};
+    prepare(paths, src, keypoints, decryptions);
+    for (int i = 1; i < src.size(); i++) {
+        MatchDetail matchDetail{i - 1, i, 0, 0, 0};
         computeMatchDetail(decryptions[i - 1], keypoints[i - 1],
                            decryptions[i], keypoints[i],
                            matchDetail);
@@ -205,7 +234,7 @@ bool checkLargeSize(vector<string> &paths) {
             key = paths[i] + paths[i - 1];
         else
             key = paths[i - 1] + paths[i];
-        cacheNumberKeyPointMatch[key] = matchDetail.numberMatch;
+        cacheMatchDetail[key] = matchDetail;
 
         if (matchDetail.numberMatch < MIN_MATCH)
             return false;
@@ -215,16 +244,16 @@ bool checkLargeSize(vector<string> &paths) {
 
 bool checkSmallSize(vector<string> &paths) {
     vector<Mat> src;
-    vector<Mat> srcScaleAndGray;
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
-    prepare(paths, src, srcScaleAndGray, keypoints, decryptions);
+    prepare(paths, src, keypoints, decryptions);
     vector<MatchDetail> matchDetailList;
-    for (int i = 0; i < srcScaleAndGray.size() - 1; i++)
-        for (int j = i + 1; j < srcScaleAndGray.size(); j++) {
+    for (int i = 0; i < src.size() - 1; i++)
+        for (int j = i + 1; j < src.size(); j++) {
             MatchDetail matchDetail{i, j, 0};
             int numberMatch = getNumberKeyPointMatch(paths[i], paths[j]);
             if (numberMatch != INT_MIN) {
+                __android_log_print(ANDROID_LOG_DEBUG, "Native", "Cache ne`");
                 if (numberMatch < 0) {
                     swap(matchDetail.img1, matchDetail.img2);
                     matchDetail.numberMatch = -(numberMatch);
@@ -241,14 +270,15 @@ bool checkSmallSize(vector<string> &paths) {
             if (matchDetail.img1 == j)
                 key = paths[j] + paths[i];
             else
-                key = paths[i] + paths[j];
-            cacheNumberKeyPointMatch[key] = matchDetail.numberMatch;
+            key = paths[i] + paths[j];
+            cacheMatchDetail[key] = matchDetail;
         }
     return computeOrder(paths.size(), matchDetailList);
 }
 
-void prepare(const vector<string> &paths, vector<Mat> &src, vector<Mat> &srcScaleAndGray,
+void prepare(const vector<string> &paths, vector<Mat> &src,
              vector<vector<KeyPoint>> &keypoints, vector<Mat> &decryptions) {
+    vector<Mat> srcScaleAndGray;
     src.reserve(paths.size());
     for (const string &str:paths)
         src.push_back(image_src[str]);
@@ -281,10 +311,10 @@ bool cache(vector<string> &paths) {
 }
 
 int getNumberKeyPointMatch(string img1, string img2) {
-    if (cacheNumberKeyPointMatch.find(img1 + img2) != cacheNumberKeyPointMatch.end())
-        return cacheNumberKeyPointMatch[img1 + img2];
-    if (cacheNumberKeyPointMatch.find(img2 + img1) != cacheNumberKeyPointMatch.end())
-        return cacheNumberKeyPointMatch[img2 + img1] * (-1);
+    if (cacheMatchDetail.find(img1 + img2) != cacheMatchDetail.end())
+        return cacheMatchDetail[img1 + img2].numberMatch;
+    if (cacheMatchDetail.find(img2 + img1) != cacheMatchDetail.end())
+        return cacheMatchDetail[img2 + img1].numberMatch * (-1);
     return INT_MIN;
 }
 
@@ -298,7 +328,6 @@ computeOrder(unsigned int size, vector<MatchDetail> matchList) {
         node->prev = NULL;
         nodes.push_back(node);
     }
-    order.clear();
     int edge = 0;
     sort(matchList.begin(), matchList.end(), compareMatch);
     for (auto matchDetail : matchList) {
@@ -318,8 +347,6 @@ computeOrder(unsigned int size, vector<MatchDetail> matchList) {
         order.push_back(cur->val);
         cur = cur->next;
     }
-    for(int i:order)
-        __android_log_print(ANDROID_LOG_DEBUG,"Native","%s", to_string(i+1).c_str());
     return true;
 }
 
@@ -327,3 +354,47 @@ bool compareMatch(MatchDetail matchDetail1, MatchDetail matchDetail2) {
     return matchDetail1.numberMatch > matchDetail2.numberMatch;
 }
 
+jobject mat_to_bitmap(JNIEnv *env, Mat &src) {
+    jclass java_bitmap_class = (jclass) env->FindClass("android/graphics/Bitmap");
+    jclass bmpCfgCls = env->FindClass("android/graphics/Bitmap$Config");
+    jmethodID bmpClsValueOfMid = env->GetStaticMethodID(bmpCfgCls, "valueOf",
+                                                        "(Ljava/lang/String;)Landroid/graphics/Bitmap$Config;");
+    jobject jBmpCfg = env->CallStaticObjectMethod(bmpCfgCls, bmpClsValueOfMid,
+                                                  env->NewStringUTF("ARGB_8888"));
+
+    jmethodID mid = env->GetStaticMethodID(java_bitmap_class,
+                                           "createBitmap",
+                                           "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
+
+    jobject bitmap = env->CallStaticObjectMethod(java_bitmap_class,
+                                                 mid, src.size().width, src.size().height,
+                                                 jBmpCfg);
+    AndroidBitmapInfo info;
+    void *pixels = 0;
+    cvtColor(src, src, CV_BGR2RGB);
+
+    try {
+        //validate
+        CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
+        CV_Assert(src.type() == CV_8UC1 || src.type() == CV_8UC3 || src.type() == CV_8UC4);
+        CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
+        CV_Assert(pixels);
+
+        //type mat
+        Mat tmp(info.height, info.width, CV_8UC4, pixels);
+        cvtColor(src, tmp, CV_RGB2RGBA);
+        AndroidBitmap_unlockPixels(env, bitmap);
+        return bitmap;
+    } catch (cv::Exception e) {
+        AndroidBitmap_unlockPixels(env, bitmap);
+        jclass je = env->FindClass("org/opencv/core/CvException");
+        if (!je) je = env->FindClass("java/lang/Exception");
+        env->ThrowNew(je, e.what());
+        return bitmap;
+    } catch (...) {
+        AndroidBitmap_unlockPixels(env, bitmap);
+        jclass je = env->FindClass("java/lang/Exception");
+        env->ThrowNew(je, "Unknown exception in JNI code {nMatToBitmap}");
+        return bitmap;
+    }
+}

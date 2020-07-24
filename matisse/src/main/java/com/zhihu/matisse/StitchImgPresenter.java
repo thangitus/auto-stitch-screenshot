@@ -1,39 +1,13 @@
 package com.zhihu.matisse;
 
 import android.annotation.SuppressLint;
-import android.os.Build;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
-import androidx.annotation.RequiresApi;
-import androidx.core.util.Pair;
-
-import org.opencv.core.Core;
-import org.opencv.core.DMatch;
-import org.opencv.core.KeyPoint;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfDMatch;
-import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.Rect;
-import org.opencv.core.Size;
-import org.opencv.features2d.BFMatcher;
-import org.opencv.features2d.FastFeatureDetector;
-import org.opencv.features2d.ORB;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
-
-import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,7 +20,8 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private Handler handler;
    private StitchImgUseCase.View view;
    private Runnable runnable = null;
-
+   List<String> selectedPaths;
+   long start, end;
    @SuppressLint({"RestrictedApi", "HandlerLeak"})
    public StitchImgPresenter(StitchImgUseCase.View view) {
       this.view = view;
@@ -57,23 +32,25 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
             if (msg.what == CHECK) {
                Boolean result = (Boolean) msg.obj;
                if (result)
-                  view.enableButtonStitch();
+                  view.showButtonStitch();
                else
-                  view.disableButtonStitch();
+                  view.hideButtonStitch();
 
                if (runnable != null)
                   pool.submit(runnable);
             }
             if (msg.what == DONE) {
                view.hideProgress();
+               view.enableButtonStitch();
+               view.toast("Stitch " + (end - start) + " Millis");
                view.returnFileName((String) msg.obj);
             }
          }
       };
    }
-
    @Override
    public void onUpdateSelectedPaths(List<String> selectedPaths) {
+      this.selectedPaths = selectedPaths;
       if (selectedPaths.size() < 2)
          sendSuggest(false);
       runnable = new Runnable() {
@@ -89,6 +66,35 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          pool.submit(runnable);
          runnable = null;
       }
+   }
+   @Override
+   public void stitchImages() {
+      view.disableButtonStitch();
+      view.showProgress();
+      runnable = new Runnable() {
+         @Override
+         public void run() {
+            start = System.currentTimeMillis();
+            Bitmap result = stitchNative(selectedPaths.toArray(new String[0]));
+            end = System.currentTimeMillis();
+            String[] part = selectedPaths.get(0)
+                                         .split("/");
+            StringBuilder fileName = new StringBuilder();
+            for (int i = 1; i < part.length - 1; i++) {
+               fileName.append(part[i]);
+               fileName.append("/");
+            }
+            fileName.append("Result.jpg");
+
+            try (FileOutputStream out = new FileOutputStream(fileName.toString())) {
+               result.compress(Bitmap.CompressFormat.JPEG, 100, out);
+               sendLocalPathMessage(fileName.toString());
+            } catch (IOException e) {
+               e.printStackTrace();
+            }
+         }
+      };
+      pool.submit(runnable);
    }
 
    private void sendSuggest(boolean b) {
@@ -106,5 +112,5 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    }
 
    public native boolean checkNativeStitch(String[] selectedPaths);
-
+   public native Bitmap stitchNative(String[] selectedPaths);
 }
