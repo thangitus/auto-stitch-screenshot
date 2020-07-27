@@ -60,13 +60,11 @@ Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz
     vector<MatchDetail> matchDetails;
     for (int i = 1; i < src.size(); i++) {
         MatchDetail tmp{i - 1, i, 0, 0, 0};
-//        if (cacheMatchDetail.find(paths[i - 1] + paths[i]) != cacheMatchDetail.end()) {
-//            tmp = cacheMatchDetail[paths[i - 1] + paths[i]];
-//            matchDetails.push_back(tmp);
-//            string msg = "cache" + to_string(i - 1) + to_string(i);
-//            __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s", msg.c_str());
-//            continue;
-//        }
+        tmp = cacheMatchDetail[paths[i - 1] + paths[i]];
+        if (tmp.numberMatch != 0) {
+            matchDetails.push_back(tmp);
+            continue;
+        }
         computeMatchDetail(decryptions[i - 1], keypoints[i - 1], decryptions[i], keypoints[i], tmp);
         matchDetails.push_back(tmp);
     }
@@ -176,9 +174,6 @@ void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_obje
             }
         }
     }
-    if (isSwap) {
-        swap(matchDetail.img1, matchDetail.img2);
-    }
     matchDetail.numberMatch = maxFrequency;
 
     for (DMatch match : good_matches) {
@@ -187,6 +182,10 @@ void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_obje
             matchDetail.rowImg1 = keypoints_object[match.queryIdx].pt.y;
             matchDetail.rowImg2 = keypoints_scene[match.trainIdx].pt.y;
         }
+    }
+    if (isSwap) {
+        swap(matchDetail.img1, matchDetail.img2);
+        swap(matchDetail.rowImg1, matchDetail.rowImg2);
     }
 }
 
@@ -270,7 +269,7 @@ bool checkSmallSize(vector<string> &paths) {
             if (matchDetail.img1 == j)
                 key = paths[j] + paths[i];
             else
-            key = paths[i] + paths[j];
+                key = paths[i] + paths[j];
             cacheMatchDetail[key] = matchDetail;
         }
     return computeOrder(paths.size(), matchDetailList);
@@ -311,10 +310,13 @@ bool cache(vector<string> &paths) {
 }
 
 int getNumberKeyPointMatch(string img1, string img2) {
-    if (cacheMatchDetail.find(img1 + img2) != cacheMatchDetail.end())
-        return cacheMatchDetail[img1 + img2].numberMatch;
-    if (cacheMatchDetail.find(img2 + img1) != cacheMatchDetail.end())
-        return cacheMatchDetail[img2 + img1].numberMatch * (-1);
+    int res;
+    res = cacheMatchDetail[img1 + img2].numberMatch;
+    if (res)
+        return res;
+    res = cacheMatchDetail[img2 + img1].numberMatch;
+    if (res)
+        return -res;
     return INT_MIN;
 }
 
