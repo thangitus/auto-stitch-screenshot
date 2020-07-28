@@ -282,7 +282,8 @@ void prepare(const vector<string> &paths, vector<Mat> &src,
     for (const string &str:paths)
         src.push_back(image_src[str]);
     srcScaleAndGray = scaleAndGray(src);
-    for (int i = 0; i < srcScaleAndGray.size(); i++)
+    for (int i = 0; i \
+    < srcScaleAndGray.size(); i++)
         detectAndCompute(srcScaleAndGray[i], keypoints, decryptions, i);
 }
 
