@@ -19,20 +19,11 @@ set_target_properties(cv_imgproc-lib
         PROPERTIES IMPORTED_LOCATION
         ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_imgproc.so)
 
-add_library(cv_imgcodecs-lib SHARED IMPORTED)
-set_target_properties(cv_imgcodecs-lib
-        PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_imgcodecs.so)
-
 add_library(cv_features2d-lib SHARED IMPORTED)
 set_target_properties(cv_features2d-lib
         PROPERTIES IMPORTED_LOCATION
         ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_features2d.so)
 
-#add_library(cv_flann-lib SHARED IMPORTED)
-#set_target_properties(cv_flann-lib
-#        PROPERTIES IMPORTED_LOCATION
-#        ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libopencv_flann.so)
 
 target_link_libraries(native-lib ${log-lib} ${jnigraphics-lib} cv_core-lib
-                        cv_imgproc-lib cv_imgcodecs-lib cv_features2d-lib)
+                        cv_imgproc-lib cv_features2d-lib)

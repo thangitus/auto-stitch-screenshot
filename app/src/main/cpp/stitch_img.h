@@ -16,7 +16,6 @@
 #include <map>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <android/bitmap.h>
 #include <android/log.h>
 
@@ -49,17 +48,18 @@ void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails);
 
 Mat stitchImagesVertical(vector<Mat> src);
 
-void readImg(const vector<string> &selected_paths);
 
 vector<string> objectArrayToVectorString(JNIEnv *env, jobjectArray obj);
 
+vector<Mat> objectArrayToVectorMat(JNIEnv *env, jobjectArray list_src);
+
 int getNumberKeyPointMatch(string img1, string img2);
 
-bool cache(vector<string> &paths);
+bool cache(vector<string> &paths, vector<Mat> &src);
 
-bool checkSmallSize(vector<string> &paths);
+bool checkSmallSize(vector<string> &paths, vector<Mat> &src);
 
-bool checkLargeSize(vector<string> &paths);
+bool checkLargeSize(vector<string> &paths, vector<Mat> &src);
 
 
 bool
@@ -69,5 +69,7 @@ bool compareMatch(MatchDetail matchDetail1, MatchDetail matchDetail2);
 
 void prepare(const vector<string> &paths, vector<Mat> &src,
              vector<vector<KeyPoint>> &keypoints, vector<Mat> &decryptions);
+
+Mat bitmapToMat(JNIEnv *env, jobject &bitmap);
 
 #endif //AUTOSTITCHSCREENSHOT_STITCH_IMG_H

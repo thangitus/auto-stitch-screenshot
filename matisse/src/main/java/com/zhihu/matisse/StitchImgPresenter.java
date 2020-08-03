@@ -2,11 +2,16 @@ package com.zhihu.matisse;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,11 +25,13 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    private Handler handler;
    private StitchImgUseCase.View view;
    private Runnable runnable = null;
+   private HashMap<String, Bitmap> hashMapSrc;
    List<String> selectedPaths;
    long start, end;
    @SuppressLint({"RestrictedApi", "HandlerLeak"})
    public StitchImgPresenter(StitchImgUseCase.View view) {
       this.view = view;
+      hashMapSrc = new HashMap<>();
       handler = new Handler() {
          @Override
          public void handleMessage(Message msg) {
@@ -36,8 +43,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
                else
                   view.hideButtonStitch();
 
-               if (runnable != null)
+               if (runnable != null) {
                   pool.submit(runnable);
+                  runnable = null;
+               }
             }
             if (msg.what == DONE) {
                view.hideProgress();
@@ -51,18 +60,33 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    @Override
    public void onUpdateSelectedPaths(List<String> selectedPaths) {
       this.selectedPaths = selectedPaths;
-      if (selectedPaths.size() < 2)
+      if (selectedPaths.size() < 2) {
          sendSuggest(false);
+         return;
+      }
       runnable = new Runnable() {
          @Override
          public void run() {
             flag = false;
-            boolean res = checkNativeStitch(selectedPaths.toArray(new String[0]));
+            if (selectedPaths.size() >= 5)
+               Collections.sort(selectedPaths);
+
+            List<Bitmap> listSrc = new ArrayList<>();
+            for (String path : selectedPaths) {
+               Bitmap bitmap = hashMapSrc.get(path);
+               if (bitmap == null) {
+                  bitmap = BitmapFactory.decodeFile(path);
+                  hashMapSrc.put(path, bitmap);
+               }
+               listSrc.add(bitmap);
+            }
+            boolean res = checkNativeStitch(selectedPaths.toArray(new String[0]), listSrc.toArray(new Bitmap[0]));
             sendSuggest(res);
             flag = true;
          }
       };
       if (flag) {
+         view.hideButtonStitch();
          pool.submit(runnable);
          runnable = null;
       }
@@ -111,6 +135,6 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       handler.sendMessage(message);
    }
 
-   public native boolean checkNativeStitch(String[] selectedPaths);
+   public native boolean checkNativeStitch(String[] selectedPaths, Bitmap[] listSrc);
    public native Bitmap stitchNative(String[] selectedPaths);
 }

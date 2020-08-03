@@ -11,7 +11,6 @@ std::string to_string(T value) {
     return os.str();
 }
 
-
 const float DEVIATION_X = 2;
 const float DEVIATION_Y = 100;
 const int MIN_MATCH = 30;
@@ -28,23 +27,22 @@ high_resolution_clock::time_point start;
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_com_zhihu_matisse_StitchImgPresenter_checkNativeStitch(JNIEnv *env, jobject thiz,
-                                                            jobjectArray selected_paths) {
+                                                            jobjectArray selected_paths,
+                                                            jobjectArray list_Src) {
     vector<string> paths = objectArrayToVectorString(env, selected_paths);
-    readImg(paths);
-
-    if (paths.size() < 2)
-        return false;
-    else if (paths.size() < 5) {
+    vector<Mat> listSrc = objectArrayToVectorMat(env, list_Src);
+    if (paths.size() < 5) {
         order.clear();
-        return checkSmallSize(paths);
-    } else return checkLargeSize(paths);
+        return checkSmallSize(paths, listSrc);
+    } else return checkLargeSize(paths, listSrc);
 }
+
+
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz,
                                                        jobjectArray selected_paths) {
     vector<string> paths = objectArrayToVectorString(env, selected_paths);
-    readImg(paths);
     if (!order.empty() && paths.size() < 5) {
         vector<string> tmp;
         tmp.reserve(order.size());
@@ -113,7 +111,6 @@ void logTime(string msg) {
     __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s ", msg.c_str());
 }
 
-unordered_map<string, Mat> image_src;
 
 void detectAndCompute(Mat imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
                       int index) {
@@ -189,19 +186,6 @@ void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_obje
     }
 }
 
-void readImg(const vector<string> &selected_paths) {
-    for (const string &str:selected_paths) {
-        if (image_src.find(str) != image_src.end())
-            continue;
-        Mat img = imread(str);
-        image_src[str] = img;
-        if (img.cols < minWidth) {
-            minWidth = img.cols;
-            ratio_scale = (float) 480 / minWidth;
-        }
-    }
-}
-
 
 vector<string> objectArrayToVectorString(JNIEnv *env, jobjectArray obj) {
     vector<string> res;
@@ -213,13 +197,31 @@ vector<string> objectArrayToVectorString(JNIEnv *env, jobjectArray obj) {
     return res;
 }
 
-bool checkLargeSize(vector<string> &paths) {
-    sort(paths.begin(), paths.end());
-    if (!cache(paths))
+vector<Mat> objectArrayToVectorMat(JNIEnv *env, jobjectArray list_src) {
+    vector<Mat> res;
+    int size = env->GetArrayLength(list_src);
+    Mat tmp;
+    for (int i = 0; i < size; i++) {
+        jobject bitmap = env->GetObjectArrayElement(list_src, i);
+        tmp = bitmapToMat(env, bitmap);
+        res.push_back(tmp);
+        if (tmp.cols < minWidth) {
+            minWidth = tmp.cols;
+            ratio_scale = (float) 480 / minWidth;
+        }
+
+    }
+    return res;
+}
+
+bool checkLargeSize(vector<string> &paths, vector<Mat> &src) {
+    if (!cache(paths, src))
         return false;
     else if (paths.empty())
         return true;
-    vector<Mat> src;
+    string msg = "paths size: " + to_string(paths.size());
+    __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s", msg.c_str());
+
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
     prepare(paths, src, keypoints, decryptions);
@@ -241,8 +243,7 @@ bool checkLargeSize(vector<string> &paths) {
     return true;
 }
 
-bool checkSmallSize(vector<string> &paths) {
-    vector<Mat> src;
+bool checkSmallSize(vector<string> &paths, vector<Mat> &src) {
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
     prepare(paths, src, keypoints, decryptions);
@@ -251,7 +252,7 @@ bool checkSmallSize(vector<string> &paths) {
         for (int j = i + 1; j < src.size(); j++) {
             MatchDetail matchDetail{i, j, 0};
             int numberMatch = getNumberKeyPointMatch(paths[i], paths[j]);
-            if (numberMatch != INT_MIN) {
+            if (numberMatch != INT8_MIN) {
                 __android_log_print(ANDROID_LOG_DEBUG, "Native", "Cache ne`");
                 if (numberMatch < 0) {
                     swap(matchDetail.img1, matchDetail.img2);
@@ -278,35 +279,36 @@ bool checkSmallSize(vector<string> &paths) {
 void prepare(const vector<string> &paths, vector<Mat> &src,
              vector<vector<KeyPoint>> &keypoints, vector<Mat> &decryptions) {
     vector<Mat> srcScaleAndGray;
-    src.reserve(paths.size());
-    for (const string &str:paths)
-        src.push_back(image_src[str]);
     srcScaleAndGray = scaleAndGray(src);
-    for (int i = 0; i \
-    < srcScaleAndGray.size(); i++)
+    for (int i = 0; i < srcScaleAndGray.size(); i++)
         detectAndCompute(srcScaleAndGray[i], keypoints, decryptions, i);
 }
 
-bool cache(vector<string> &paths) {
-    vector<string> res;
+bool cache(vector<string> &paths, vector<Mat> &src) {
+    vector<string> pathRes;
+    vector<Mat> srcRes;
     for (int i = 0; i < paths.size(); i++) {
         string currentFile = paths[i];
         if (i < paths.size() - 1) {
             string nextFile = paths[i + 1];
             int numberKeyPointMatch = getNumberKeyPointMatch(currentFile, nextFile);
-            if (numberKeyPointMatch > 0 && numberKeyPointMatch < MIN_MATCH)
+            if (abs(numberKeyPointMatch) < MIN_MATCH)
                 return false;
             else if (numberKeyPointMatch > MIN_MATCH)
                 if (i == 0 ||
-                    (i > 0 && getNumberKeyPointMatch(paths[i - 1], currentFile) > MIN_MATCH))
+                    (i > 0 && getNumberKeyPointMatch(paths[i - 1], currentFile) > MIN_MATCH)) {
                     continue;
+                }
         }
         if (i > 0 && i == paths.size() - 1 &&
-            getNumberKeyPointMatch(paths[i - 1], currentFile) > MIN_MATCH)
+            getNumberKeyPointMatch(paths[i - 1], currentFile) > MIN_MATCH) {
             continue;
-        res.push_back(currentFile);
+        }
+        srcRes.push_back(src[i]);
+        pathRes.push_back(currentFile);
     }
-    paths = res;
+    src = srcRes;
+    paths = pathRes;
     return paths.size() != 1;
 }
 
@@ -318,7 +320,7 @@ int getNumberKeyPointMatch(string img1, string img2) {
     res = cacheMatchDetail[img2 + img1].numberMatch;
     if (res)
         return -res;
-    return INT_MIN;
+    return INT8_MIN;
 }
 
 bool
@@ -399,5 +401,41 @@ jobject mat_to_bitmap(JNIEnv *env, Mat &src) {
         jclass je = env->FindClass("java/lang/Exception");
         env->ThrowNew(je, "Unknown exception in JNI code {nMatToBitmap}");
         return bitmap;
+    }
+}
+
+
+Mat bitmapToMat(JNIEnv *env, jobject &bitmap) {
+    AndroidBitmapInfo info;
+    void *pixels = nullptr;
+    Mat dst;
+
+    try {
+        CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
+        CV_Assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
+                  info.format == ANDROID_BITMAP_FORMAT_RGB_565);
+        CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
+        CV_Assert(pixels);
+        dst.create(info.height, info.width, CV_8UC4);
+        if (info.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
+            Mat tmp(info.height, info.width, CV_8UC4, pixels);
+            tmp.copyTo(dst);
+        } else {
+            Mat tmp(info.height, info.width, CV_8UC2, pixels);
+            cvtColor(tmp, dst, COLOR_BGR5652RGBA);
+        }
+        AndroidBitmap_unlockPixels(env, bitmap);
+        return dst;
+    } catch (const cv::Exception &e) {
+        AndroidBitmap_unlockPixels(env, bitmap);
+        jclass je = env->FindClass("org/opencv/core/CvException");
+        if (!je) je = env->FindClass("java/lang/Exception");
+        env->ThrowNew(je, e.what());
+        return dst;
+    } catch (...) {
+        AndroidBitmap_unlockPixels(env, bitmap);
+        jclass je = env->FindClass("java/lang/Exception");
+        env->ThrowNew(je, "Unknown exception in JNI code {nBitmapToMat}");
+        return dst;
     }
 }
