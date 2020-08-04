@@ -41,16 +41,21 @@ Java_com_zhihu_matisse_StitchImgPresenter_checkNativeStitch(JNIEnv *env, jobject
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz,
-                                                       jobjectArray selected_paths,jobjectArray list_Src) {
+                                                       jobjectArray selected_paths,
+                                                       jobjectArray list_Src) {
     vector<string> paths = objectArrayToVectorString(env, selected_paths);
     vector<Mat> src = objectArrayToVectorMat(env, list_Src);
 
     if (!order.empty() && paths.size() < 5) {
-        vector<string> tmp;
-        tmp.reserve(order.size());
-        for (int i:order)
-            tmp.push_back(paths[i]);
-        paths = tmp;
+        vector<string> tmpPath;
+        vector<Mat> tmpSrc;
+        tmpPath.reserve(order.size());
+        for (int i:order) {
+            tmpPath.push_back(paths[i]);
+            tmpSrc.push_back(src[i]);
+        }
+        paths = tmpPath;
+        src = tmpSrc;
     }
 
     vector<vector<KeyPoint>> keypoints(paths.size());
@@ -69,7 +74,7 @@ Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz
     }
     cropImg(src, matchDetails);
     Mat res = stitchImagesVertical(src);
-    jobject bitmap = mat_to_bitmap(env, res);
+    jobject bitmap = matToBitmap(env, res);
     return bitmap;
 }
 
@@ -352,7 +357,9 @@ computeOrder(unsigned int size, vector<MatchDetail> matchList) {
     while (cur) {
         order.push_back(cur->val);
         cur = cur->next;
+        if (cur) delete cur->prev;
     }
+
     return true;
 }
 
@@ -360,7 +367,7 @@ bool compareMatch(MatchDetail matchDetail1, MatchDetail matchDetail2) {
     return matchDetail1.numberMatch > matchDetail2.numberMatch;
 }
 
-jobject mat_to_bitmap(JNIEnv *env, Mat &src) {
+jobject matToBitmap(JNIEnv *env, Mat &src) {
     jclass java_bitmap_class = (jclass) env->FindClass("android/graphics/Bitmap");
     jclass bmpCfgCls = env->FindClass("android/graphics/Bitmap$Config");
     jmethodID bmpClsValueOfMid = env->GetStaticMethodID(bmpCfgCls, "valueOf",

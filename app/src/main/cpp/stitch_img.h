@@ -42,7 +42,7 @@ void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_obje
                         Mat descriptors_scene,
                         vector<KeyPoint> &keypoints_scene, MatchDetail &matchDetail);
 
-jobject mat_to_bitmap(JNIEnv *env, Mat &src);
+jobject matToBitmap(JNIEnv *env, Mat &src);
 
 void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails);
 
