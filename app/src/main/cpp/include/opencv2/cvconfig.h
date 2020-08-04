@@ -102,13 +102,13 @@
 /* #undef HAVE_INTELPERC */
 
 /* Intel Integrated Performance Primitives */
-#define HAVE_IPP
-#define HAVE_IPP_ICV
-#define HAVE_IPP_IW
-#define HAVE_IPP_IW_LL
+/* #undef HAVE_IPP */
+/* #undef HAVE_IPP_ICV */
+/* #undef HAVE_IPP_IW */
+/* #undef HAVE_IPP_IW_LL */
 
 /* JPEG-2000 codec */
-#define HAVE_JASPER
+/* #undef HAVE_JASPER */
 
 /* IJG JPEG codec */
 #define HAVE_JPEG
@@ -140,7 +140,7 @@
 /* #undef HAVE_OPENCL_D3D11_NV */
 
 /* OpenEXR codec */
-#define HAVE_OPENEXR
+/* #undef HAVE_OPENEXR */
 
 /* OpenGL support*/
 /* #undef HAVE_OPENGL */
@@ -158,7 +158,7 @@
 #define HAVE_PTHREAD
 
 /* parallel_for with pthreads */
-#define HAVE_PTHREADS_PF
+/* #undef HAVE_PTHREADS_PF */
 
 /* Qt support */
 /* #undef HAVE_QT */
@@ -246,6 +246,6 @@
 #define OPENCV_TRACE
 
 /* Library QR-code decoding */
-#define HAVE_QUIRC
+/* #undef HAVE_QUIRC */
 
 #endif // OPENCV_CVCONFIG_H_INCLUDED

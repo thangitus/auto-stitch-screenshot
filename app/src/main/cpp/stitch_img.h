@@ -13,7 +13,7 @@
 #include <fstream>
 #include <thread>
 #include <mutex>
-#include <map>
+#include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <android/bitmap.h>

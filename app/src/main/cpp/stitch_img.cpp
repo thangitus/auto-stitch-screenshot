@@ -41,17 +41,18 @@ Java_com_zhihu_matisse_StitchImgPresenter_checkNativeStitch(JNIEnv *env, jobject
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz,
-                                                       jobjectArray selected_paths) {
+                                                       jobjectArray selected_paths,jobjectArray list_Src) {
     vector<string> paths = objectArrayToVectorString(env, selected_paths);
+    vector<Mat> src = objectArrayToVectorMat(env, list_Src);
+
     if (!order.empty() && paths.size() < 5) {
         vector<string> tmp;
         tmp.reserve(order.size());
         for (int i:order)
             tmp.push_back(paths[i]);
         paths = tmp;
-    } else sort(paths.begin(), paths.end());
+    }
 
-    vector<Mat> src;
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
     prepare(paths, src, keypoints, decryptions);
@@ -376,7 +377,6 @@ jobject mat_to_bitmap(JNIEnv *env, Mat &src) {
                                                  jBmpCfg);
     AndroidBitmapInfo info;
     void *pixels = 0;
-    cvtColor(src, src, CV_BGR2RGB);
 
     try {
         //validate

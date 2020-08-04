@@ -70,16 +70,7 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
             flag = false;
             if (selectedPaths.size() >= 5)
                Collections.sort(selectedPaths);
-
-            List<Bitmap> listSrc = new ArrayList<>();
-            for (String path : selectedPaths) {
-               Bitmap bitmap = hashMapSrc.get(path);
-               if (bitmap == null) {
-                  bitmap = BitmapFactory.decodeFile(path);
-                  hashMapSrc.put(path, bitmap);
-               }
-               listSrc.add(bitmap);
-            }
+            List<Bitmap> listSrc = getBitmaps(selectedPaths);
             boolean res = checkNativeStitch(selectedPaths.toArray(new String[0]), listSrc.toArray(new Bitmap[0]));
             sendSuggest(res);
             flag = true;
@@ -99,7 +90,10 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
          @Override
          public void run() {
             start = System.currentTimeMillis();
-            Bitmap result = stitchNative(selectedPaths.toArray(new String[0]));
+            if (selectedPaths.size() >= 5)
+               Collections.sort(selectedPaths);
+            List<Bitmap> listSrc = getBitmaps(selectedPaths);
+            Bitmap result = stitchNative(selectedPaths.toArray(new String[0]), listSrc.toArray(new Bitmap[0]));
             end = System.currentTimeMillis();
             String[] part = selectedPaths.get(0)
                                          .split("/");
@@ -120,6 +114,18 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
       };
       pool.submit(runnable);
    }
+   private List<Bitmap> getBitmaps(List<String> selectedPaths) {
+      List<Bitmap> listSrc = new ArrayList<>();
+      for (String path : selectedPaths) {
+         Bitmap bitmap = hashMapSrc.get(path);
+         if (bitmap == null) {
+            bitmap = BitmapFactory.decodeFile(path);
+            hashMapSrc.put(path, bitmap);
+         }
+         listSrc.add(bitmap);
+      }
+      return listSrc;
+   }
 
    private void sendSuggest(boolean b) {
       flag = true;
@@ -136,5 +142,5 @@ public class StitchImgPresenter implements StitchImgUseCase.Presenter {
    }
 
    public native boolean checkNativeStitch(String[] selectedPaths, Bitmap[] listSrc);
-   public native Bitmap stitchNative(String[] selectedPaths);
+   public native Bitmap stitchNative(String[] selectedPaths, Bitmap[] listSrc);
 }
