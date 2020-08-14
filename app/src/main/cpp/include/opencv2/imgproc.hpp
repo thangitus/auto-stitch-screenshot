@@ -226,7 +226,7 @@ enum MorphTypes{
 enum MorphShapes {
     MORPH_RECT    = 0, //!< a rectangular structuring element:  \f[E_{ij}=1\f]
     MORPH_CROSS   = 1, //!< a cross-shaped structuring element:
-                       //!< \f[E_{ij} = \begin{cases} 1 & \texttt{if } {i=\texttt{anchor.y } {or } {j=\texttt{anchor.x}}} \\0 & \texttt{otherwise} \end{cases}\f]
+                       //!< \f[E_{ij} =  \fork{1}{if i=\texttt{anchor.y} or j=\texttt{anchor.x}}{0}{otherwise}\f]
     MORPH_ELLIPSE = 2 //!< an elliptic structuring element, that is, a filled ellipse inscribed
                       //!< into the rectangle Rect(0, 0, esize.width, 0.esize.height)
 };
@@ -396,9 +396,7 @@ enum ConnectedComponentsTypes {
     CC_STAT_WIDTH  = 2, //!< The horizontal size of the bounding box
     CC_STAT_HEIGHT = 3, //!< The vertical size of the bounding box
     CC_STAT_AREA   = 4, //!< The total area (in pixels) of the connected component
-#ifndef CV_DOXYGEN
-    CC_STAT_MAX    = 5 //!< Max enumeration value. Used internally only for memory allocation
-#endif
+    CC_STAT_MAX    = 5
 };
 
 //! connected components algorithm
@@ -801,108 +799,108 @@ enum RectanglesIntersectTypes {
 
 /** @brief finds arbitrary template in the grayscale image using Generalized Hough Transform
 */
-class CV_EXPORTS_W GeneralizedHough : public Algorithm
+class CV_EXPORTS GeneralizedHough : public Algorithm
 {
 public:
     //! set template to search
-    CV_WRAP virtual void setTemplate(InputArray templ, Point templCenter = Point(-1, -1)) = 0;
-    CV_WRAP virtual void setTemplate(InputArray edges, InputArray dx, InputArray dy, Point templCenter = Point(-1, -1)) = 0;
+    virtual void setTemplate(InputArray templ, Point templCenter = Point(-1, -1)) = 0;
+    virtual void setTemplate(InputArray edges, InputArray dx, InputArray dy, Point templCenter = Point(-1, -1)) = 0;
 
     //! find template on image
-    CV_WRAP virtual void detect(InputArray image, OutputArray positions, OutputArray votes = noArray()) = 0;
-    CV_WRAP virtual void detect(InputArray edges, InputArray dx, InputArray dy, OutputArray positions, OutputArray votes = noArray()) = 0;
+    virtual void detect(InputArray image, OutputArray positions, OutputArray votes = noArray()) = 0;
+    virtual void detect(InputArray edges, InputArray dx, InputArray dy, OutputArray positions, OutputArray votes = noArray()) = 0;
 
     //! Canny low threshold.
-    CV_WRAP virtual void setCannyLowThresh(int cannyLowThresh) = 0;
-    CV_WRAP virtual int getCannyLowThresh() const = 0;
+    virtual void setCannyLowThresh(int cannyLowThresh) = 0;
+    virtual int getCannyLowThresh() const = 0;
 
     //! Canny high threshold.
-    CV_WRAP virtual void setCannyHighThresh(int cannyHighThresh) = 0;
-    CV_WRAP virtual int getCannyHighThresh() const = 0;
+    virtual void setCannyHighThresh(int cannyHighThresh) = 0;
+    virtual int getCannyHighThresh() const = 0;
 
     //! Minimum distance between the centers of the detected objects.
-    CV_WRAP virtual void setMinDist(double minDist) = 0;
-    CV_WRAP virtual double getMinDist() const = 0;
+    virtual void setMinDist(double minDist) = 0;
+    virtual double getMinDist() const = 0;
 
     //! Inverse ratio of the accumulator resolution to the image resolution.
-    CV_WRAP virtual void setDp(double dp) = 0;
-    CV_WRAP virtual double getDp() const = 0;
+    virtual void setDp(double dp) = 0;
+    virtual double getDp() const = 0;
 
     //! Maximal size of inner buffers.
-    CV_WRAP virtual void setMaxBufferSize(int maxBufferSize) = 0;
-    CV_WRAP virtual int getMaxBufferSize() const = 0;
+    virtual void setMaxBufferSize(int maxBufferSize) = 0;
+    virtual int getMaxBufferSize() const = 0;
 };
 
 /** @brief finds arbitrary template in the grayscale image using Generalized Hough Transform
 
 Detects position only without translation and rotation @cite Ballard1981 .
 */
-class CV_EXPORTS_W GeneralizedHoughBallard : public GeneralizedHough
+class CV_EXPORTS GeneralizedHoughBallard : public GeneralizedHough
 {
 public:
     //! R-Table levels.
-    CV_WRAP virtual void setLevels(int levels) = 0;
-    CV_WRAP virtual int getLevels() const = 0;
+    virtual void setLevels(int levels) = 0;
+    virtual int getLevels() const = 0;
 
     //! The accumulator threshold for the template centers at the detection stage. The smaller it is, the more false positions may be detected.
-    CV_WRAP virtual void setVotesThreshold(int votesThreshold) = 0;
-    CV_WRAP virtual int getVotesThreshold() const = 0;
+    virtual void setVotesThreshold(int votesThreshold) = 0;
+    virtual int getVotesThreshold() const = 0;
 };
 
 /** @brief finds arbitrary template in the grayscale image using Generalized Hough Transform
 
 Detects position, translation and rotation @cite Guil1999 .
 */
-class CV_EXPORTS_W GeneralizedHoughGuil : public GeneralizedHough
+class CV_EXPORTS GeneralizedHoughGuil : public GeneralizedHough
 {
 public:
     //! Angle difference in degrees between two points in feature.
-    CV_WRAP virtual void setXi(double xi) = 0;
-    CV_WRAP virtual double getXi() const = 0;
+    virtual void setXi(double xi) = 0;
+    virtual double getXi() const = 0;
 
     //! Feature table levels.
-    CV_WRAP virtual void setLevels(int levels) = 0;
-    CV_WRAP virtual int getLevels() const = 0;
+    virtual void setLevels(int levels) = 0;
+    virtual int getLevels() const = 0;
 
     //! Maximal difference between angles that treated as equal.
-    CV_WRAP virtual void setAngleEpsilon(double angleEpsilon) = 0;
-    CV_WRAP virtual double getAngleEpsilon() const = 0;
+    virtual void setAngleEpsilon(double angleEpsilon) = 0;
+    virtual double getAngleEpsilon() const = 0;
 
     //! Minimal rotation angle to detect in degrees.
-    CV_WRAP virtual void setMinAngle(double minAngle) = 0;
-    CV_WRAP virtual double getMinAngle() const = 0;
+    virtual void setMinAngle(double minAngle) = 0;
+    virtual double getMinAngle() const = 0;
 
     //! Maximal rotation angle to detect in degrees.
-    CV_WRAP virtual void setMaxAngle(double maxAngle) = 0;
-    CV_WRAP virtual double getMaxAngle() const = 0;
+    virtual void setMaxAngle(double maxAngle) = 0;
+    virtual double getMaxAngle() const = 0;
 
     //! Angle step in degrees.
-    CV_WRAP virtual void setAngleStep(double angleStep) = 0;
-    CV_WRAP virtual double getAngleStep() const = 0;
+    virtual void setAngleStep(double angleStep) = 0;
+    virtual double getAngleStep() const = 0;
 
     //! Angle votes threshold.
-    CV_WRAP virtual void setAngleThresh(int angleThresh) = 0;
-    CV_WRAP virtual int getAngleThresh() const = 0;
+    virtual void setAngleThresh(int angleThresh) = 0;
+    virtual int getAngleThresh() const = 0;
 
     //! Minimal scale to detect.
-    CV_WRAP virtual void setMinScale(double minScale) = 0;
-    CV_WRAP virtual double getMinScale() const = 0;
+    virtual void setMinScale(double minScale) = 0;
+    virtual double getMinScale() const = 0;
 
     //! Maximal scale to detect.
-    CV_WRAP virtual void setMaxScale(double maxScale) = 0;
-    CV_WRAP virtual double getMaxScale() const = 0;
+    virtual void setMaxScale(double maxScale) = 0;
+    virtual double getMaxScale() const = 0;
 
     //! Scale step.
-    CV_WRAP virtual void setScaleStep(double scaleStep) = 0;
-    CV_WRAP virtual double getScaleStep() const = 0;
+    virtual void setScaleStep(double scaleStep) = 0;
+    virtual double getScaleStep() const = 0;
 
     //! Scale votes threshold.
-    CV_WRAP virtual void setScaleThresh(int scaleThresh) = 0;
-    CV_WRAP virtual int getScaleThresh() const = 0;
+    virtual void setScaleThresh(int scaleThresh) = 0;
+    virtual int getScaleThresh() const = 0;
 
     //! Position votes threshold.
-    CV_WRAP virtual void setPosThresh(int posThresh) = 0;
-    CV_WRAP virtual int getPosThresh() const = 0;
+    virtual void setPosThresh(int posThresh) = 0;
+    virtual int getPosThresh() const = 0;
 };
 
 //! @} imgproc_shape
@@ -1076,11 +1074,11 @@ public:
      */
     CV_WRAP void getTriangleList(CV_OUT std::vector<Vec6f>& triangleList) const;
 
-    /** @brief Returns a list of all Voronoi facets.
+    /** @brief Returns a list of all Voroni facets.
 
     @param idx Vector of vertices IDs to consider. For all vertices you can pass empty vector.
-    @param facetList Output vector of the Voronoi facets.
-    @param facetCenters Output vector of the Voronoi facets center points.
+    @param facetList Output vector of the Voroni facets.
+    @param facetCenters Output vector of the Voroni facets center points.
 
      */
     CV_WRAP void getVoronoiFacetList(const std::vector<int>& idx, CV_OUT std::vector<std::vector<Point2f> >& facetList,
@@ -1213,12 +1211,14 @@ protected:
 //! @addtogroup imgproc_feature
 //! @{
 
+/** @example samples/cpp/lsd_lines.cpp
+An example using the LineSegmentDetector
+\image html building_lsd.png "Sample output image" width=434 height=300
+*/
+
 /** @brief Line segment detector class
 
 following the algorithm described at @cite Rafael12 .
-
-@note Implementation has been removed due original code license conflict
-
 */
 class CV_EXPORTS_W LineSegmentDetector : public Algorithm
 {
@@ -1282,8 +1282,6 @@ to edit those, as to tailor it for their own application.
 is chosen.
 @param _density_th Minimal density of aligned region points in the enclosing rectangle.
 @param _n_bins Number of bins in pseudo-ordering of gradient modulus.
-
-@note Implementation has been removed due original code license conflict
  */
 CV_EXPORTS_W Ptr<LineSegmentDetector> createLineSegmentDetector(
     int _refine = LSD_REFINE_STD, double _scale = 0.8,
@@ -1409,7 +1407,7 @@ equal to sigmaX, if both sigmas are zeros, they are computed from ksize.width an
 respectively (see #getGaussianKernel for details); to fully control the result regardless of
 possible future modifications of all this semantics, it is recommended to specify all of ksize,
 sigmaX, and sigmaY.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 
 @sa  sepFilter2D, filter2D, blur, boxFilter, bilateralFilter, medianBlur
  */
@@ -1457,7 +1455,7 @@ The function smooths an image using the kernel:
 
 where
 
-\f[\alpha = \begin{cases} \frac{1}{\texttt{ksize.width*ksize.height}} & \texttt{when } \texttt{normalize=true}  \\1 & \texttt{otherwise}\end{cases}\f]
+\f[\alpha = \fork{\frac{1}{\texttt{ksize.width*ksize.height}}}{when \texttt{normalize=true}}{1}{otherwise}\f]
 
 Unnormalized box filter is useful for computing various integral characteristics over each pixel
 neighborhood, such as covariance matrices of image derivatives (used in dense optical flow
@@ -1470,7 +1468,7 @@ algorithms, and so on). If you need to compute pixel sums over variable-size win
 @param anchor anchor point; default value Point(-1,-1) means that the anchor is at the kernel
 center.
 @param normalize flag, specifying whether the kernel is normalized by its area or not.
-@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes
 @sa  blur, bilateralFilter, GaussianBlur, medianBlur, integral
  */
 CV_EXPORTS_W void boxFilter( InputArray src, OutputArray dst, int ddepth,
@@ -1493,7 +1491,7 @@ variance and standard deviation around the neighborhood of a pixel.
 @param anchor kernel anchor point. The default value of Point(-1, -1) denotes that the anchor is at the kernel
 center.
 @param normalize flag, specifying whether the kernel is to be normalized by it's area or not.
-@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes
 @sa boxFilter
 */
 CV_EXPORTS_W void sqrBoxFilter( InputArray src, OutputArray dst, int ddepth,
@@ -1507,7 +1505,7 @@ The function smooths an image using the kernel:
 
 \f[\texttt{K} =  \frac{1}{\texttt{ksize.width*ksize.height}} \begin{bmatrix} 1 & 1 & 1 &  \cdots & 1 & 1  \\ 1 & 1 & 1 &  \cdots & 1 & 1  \\ \hdotsfor{6} \\ 1 & 1 & 1 &  \cdots & 1 & 1  \\ \end{bmatrix}\f]
 
-The call `blur(src, dst, ksize, anchor, borderType)` is equivalent to `boxFilter(src, dst, src.type(), ksize,
+The call `blur(src, dst, ksize, anchor, borderType)` is equivalent to `boxFilter(src, dst, src.type(),
 anchor, true, borderType)`.
 
 @param src input image; it can have any number of channels, which are processed independently, but
@@ -1516,7 +1514,7 @@ the depth should be CV_8U, CV_16U, CV_16S, CV_32F or CV_64F.
 @param ksize blurring kernel size.
 @param anchor anchor point; default value Point(-1,-1) means that the anchor is at the kernel
 center.
-@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType border mode used to extrapolate pixels outside of the image, see #BorderTypes
 @sa  boxFilter, bilateralFilter, GaussianBlur, medianBlur
  */
 CV_EXPORTS_W void blur( InputArray src, OutputArray dst,
@@ -1531,7 +1529,7 @@ according to the specified border mode.
 
 The function does actually compute correlation, not the convolution:
 
-\f[\texttt{dst} (x,y) =  \sum _{ \substack{0\leq x' < \texttt{kernel.cols}\\{0\leq y' < \texttt{kernel.rows}}}}  \texttt{kernel} (x',y')* \texttt{src} (x+x'- \texttt{anchor.x} ,y+y'- \texttt{anchor.y} )\f]
+\f[\texttt{dst} (x,y) =  \sum _{ \stackrel{0\leq x' < \texttt{kernel.cols},}{0\leq y' < \texttt{kernel.rows}} }  \texttt{kernel} (x',y')* \texttt{src} (x+x'- \texttt{anchor.x} ,y+y'- \texttt{anchor.y} )\f]
 
 That is, the kernel is not mirrored around the anchor point. If you need a real convolution, flip
 the kernel using #flip and set the new anchor to `(kernel.cols - anchor.x - 1, kernel.rows -
@@ -1550,7 +1548,7 @@ separate color planes using split and process them individually.
 the kernel; the anchor should lie within the kernel; default value (-1,-1) means that the anchor
 is at the kernel center.
 @param delta optional value added to the filtered pixels before storing them in dst.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 @sa  sepFilter2D, dft, matchTemplate
  */
 CV_EXPORTS_W void filter2D( InputArray src, OutputArray dst, int ddepth,
@@ -1571,7 +1569,7 @@ kernel kernelY. The final result shifted by delta is stored in dst .
 @param anchor Anchor position within the kernel. The default value \f$(-1,-1)\f$ means that the anchor
 is at the kernel center.
 @param delta Value added to the filtered results before storing them.
-@param borderType Pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method, see #BorderTypes
 @sa  filter2D, Sobel, GaussianBlur, boxFilter, blur
  */
 CV_EXPORTS_W void sepFilter2D( InputArray src, OutputArray dst, int ddepth,
@@ -1624,7 +1622,7 @@ The second case corresponds to a kernel of:
 @param scale optional scale factor for the computed derivative values; by default, no scaling is
 applied (see #getDerivKernels for details).
 @param delta optional delta value that is added to the results prior to storing them in dst.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 @sa  Scharr, Laplacian, sepFilter2D, filter2D, GaussianBlur, cartToPolar
  */
 CV_EXPORTS_W void Sobel( InputArray src, OutputArray dst, int ddepth,
@@ -1645,8 +1643,7 @@ Sobel( src, dy, CV_16SC1, 0, 1, 3 );
 @param dx output image with first-order derivative in x.
 @param dy output image with first-order derivative in y.
 @param ksize size of Sobel kernel. It must be 3.
-@param borderType pixel extrapolation method, see #BorderTypes.
-                  Only #BORDER_DEFAULT=#BORDER_REFLECT_101 and #BORDER_REPLICATE are supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 
 @sa Sobel
  */
@@ -1674,7 +1671,7 @@ is equivalent to
 @param scale optional scale factor for the computed derivative values; by default, no scaling is
 applied (see #getDerivKernels for details).
 @param delta optional delta value that is added to the results prior to storing them in dst.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 @sa  cartToPolar
  */
 CV_EXPORTS_W void Scharr( InputArray src, OutputArray dst, int ddepth,
@@ -1705,7 +1702,7 @@ details. The size must be positive and odd.
 @param scale Optional scale factor for the computed Laplacian values. By default, no scaling is
 applied. See #getDerivKernels for details.
 @param delta Optional delta value that is added to the results prior to storing them in dst .
-@param borderType Pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method, see #BorderTypes
 @sa  Sobel, Scharr
  */
 CV_EXPORTS_W void Laplacian( InputArray src, OutputArray dst, int ddepth,
@@ -1774,7 +1771,7 @@ of the formulae in the cornerEigenValsAndVecs description.
 src .
 @param blockSize Neighborhood size (see the details on #cornerEigenValsAndVecs ).
 @param ksize Aperture parameter for the Sobel operator.
-@param borderType Pixel extrapolation method. See #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method. See #BorderTypes.
  */
 CV_EXPORTS_W void cornerMinEigenVal( InputArray src, OutputArray dst,
                                      int blockSize, int ksize = 3,
@@ -1797,7 +1794,7 @@ size as src .
 @param blockSize Neighborhood size (see the details on #cornerEigenValsAndVecs ).
 @param ksize Aperture parameter for the Sobel operator.
 @param k Harris detector free parameter. See the formula above.
-@param borderType Pixel extrapolation method. See #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method. See #BorderTypes.
  */
 CV_EXPORTS_W void cornerHarris( InputArray src, OutputArray dst, int blockSize,
                                 int ksize, double k,
@@ -1825,7 +1822,7 @@ The output of the function can be used for robust edge or corner detection.
 @param dst Image to store the results. It has the same size as src and the type CV_32FC(6) .
 @param blockSize Neighborhood size (see details below).
 @param ksize Aperture parameter for the Sobel operator.
-@param borderType Pixel extrapolation method. See #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method. See #BorderTypes.
 
 @sa  cornerMinEigenVal, cornerHarris, preCornerDetect
  */
@@ -1854,7 +1851,7 @@ The corners can be found as local maximums of the functions, as shown below:
 @param src Source single-channel 8-bit of floating-point image.
 @param dst Output image that has the type CV_32F and the same size as src .
 @param ksize %Aperture size of the Sobel .
-@param borderType Pixel extrapolation method. See #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method. See #BorderTypes.
  */
 CV_EXPORTS_W void preCornerDetect( InputArray src, OutputArray dst, int ksize,
                                    int borderType = BORDER_DEFAULT );
@@ -2118,7 +2115,7 @@ structuring element is used. Kernel can be created using #getStructuringElement.
 @param anchor position of the anchor within the element; default value (-1, -1) means that the
 anchor is at the element center.
 @param iterations number of times erosion is applied.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType pixel extrapolation method, see #BorderTypes
 @param borderValue border value in case of a constant border
 @sa  dilate, morphologyEx, getStructuringElement
  */
@@ -2150,7 +2147,7 @@ structuring element is used. Kernel can be created using #getStructuringElement
 @param anchor position of the anchor within the element; default value (-1, -1) means that the
 anchor is at the element center.
 @param iterations number of times dilation is applied.
-@param borderType pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not suported.
+@param borderType pixel extrapolation method, see #BorderTypes
 @param borderValue border value in case of a constant border
 @sa  erode, morphologyEx, getStructuringElement
  */
@@ -2175,7 +2172,7 @@ CV_8U, CV_16U, CV_16S, CV_32F or CV_64F.
 @param anchor Anchor position with the kernel. Negative values mean that the anchor is at the
 kernel center.
 @param iterations Number of times erosion and dilation are applied.
-@param borderType Pixel extrapolation method, see #BorderTypes. #BORDER_WRAP is not supported.
+@param borderType Pixel extrapolation method, see #BorderTypes
 @param borderValue Border value in case of a constant border. The default value has a special
 meaning.
 @sa  dilate, erode, getStructuringElement
@@ -3119,9 +3116,9 @@ point coordinates out of the normalized distorted point coordinates ("normalized
 coordinates do not depend on the camera matrix).
 
 The function can be used for both a stereo camera head or a monocular camera (when R is empty).
-@param src Observed point coordinates, 2xN/Nx2 1-channel or 1xN/Nx1 2-channel (CV_32FC2 or CV_64FC2) (or
-vector\<Point2f\> ).
-@param dst Output ideal point coordinates (1xN/Nx1 2-channel or vector\<Point2f\> ) after undistortion and reverse perspective
+
+@param src Observed point coordinates, 1xN or Nx1 2-channel (CV_32FC2 or CV_64FC2).
+@param dst Output ideal point coordinates after undistortion and reverse perspective
 transformation. If matrix P is identity or omitted, dst will contain normalized point coordinates.
 @param cameraMatrix Camera matrix \f$\vecthreethree{f_x}{0}{c_x}{0}{f_y}{c_y}{0}{0}{1}\f$ .
 @param distCoeffs Input vector of distortion coefficients
@@ -3134,14 +3131,14 @@ of 4, 5, 8, 12 or 14 elements. If the vector is NULL/empty, the zero distortion 
  */
 CV_EXPORTS_W void undistortPoints( InputArray src, OutputArray dst,
                                    InputArray cameraMatrix, InputArray distCoeffs,
-                                   InputArray R = noArray(), InputArray P = noArray() );
+                                   InputArray R = noArray(), InputArray P = noArray());
 /** @overload
     @note Default version of #undistortPoints does 5 iterations to compute undistorted points.
 
  */
 CV_EXPORTS_AS(undistortPointsIter) void undistortPoints( InputArray src, OutputArray dst,
-                                                         InputArray cameraMatrix, InputArray distCoeffs,
-                                                         InputArray R, InputArray P, TermCriteria criteria );
+                                   InputArray cameraMatrix, InputArray distCoeffs,
+                                   InputArray R, InputArray P, TermCriteria criteria);
 
 //! @} imgproc_transform
 
@@ -4150,23 +4147,7 @@ without self-intersections. Otherwise, the function output is undefined.
  */
 CV_EXPORTS_W bool isContourConvex( InputArray contour );
 
-/** @example samples/cpp/intersectExample.cpp
-Examples of how intersectConvexConvex works
-*/
-
-/** @brief Finds intersection of two convex polygons
-
-@param _p1 First polygon
-@param _p2 Second polygon
-@param _p12 Output polygon describing the intersecting area
-@param handleNested When true, an intersection is found if one of the polygons is fully enclosed in the other.
-When false, no intersection is found. If the polygons share a side or the vertex of one polygon lies on an edge
-of the other, they are not considered nested and an intersection will be found regardless of the value of handleNested.
-
-@returns Absolute value of area of intersecting polygon
-
-@note intersectConvexConvex doesn't confirm that both polygons are convex and will return invalid results if they aren't.
- */
+//! finds intersection of two convex polygons
 CV_EXPORTS_W float intersectConvexConvex( InputArray _p1, InputArray _p2,
                                           OutputArray _p12, bool handleNested = true );
 
@@ -4342,11 +4323,11 @@ CV_EXPORTS_W int rotatedRectangleIntersection( const RotatedRect& rect1, const R
 
 /** @brief Creates a smart pointer to a cv::GeneralizedHoughBallard class and initializes it.
 */
-CV_EXPORTS_W Ptr<GeneralizedHoughBallard> createGeneralizedHoughBallard();
+CV_EXPORTS Ptr<GeneralizedHoughBallard> createGeneralizedHoughBallard();
 
 /** @brief Creates a smart pointer to a cv::GeneralizedHoughGuil class and initializes it.
 */
-CV_EXPORTS_W Ptr<GeneralizedHoughGuil> createGeneralizedHoughGuil();
+CV_EXPORTS Ptr<GeneralizedHoughGuil> createGeneralizedHoughGuil();
 
 //! @} imgproc_shape
 
@@ -4368,16 +4349,7 @@ enum ColormapTypes
     COLORMAP_HSV = 9, //!< ![HSV](pics/colormaps/colorscale_hsv.jpg)
     COLORMAP_PINK = 10, //!< ![pink](pics/colormaps/colorscale_pink.jpg)
     COLORMAP_HOT = 11, //!< ![hot](pics/colormaps/colorscale_hot.jpg)
-    COLORMAP_PARULA = 12, //!< ![parula](pics/colormaps/colorscale_parula.jpg)
-    COLORMAP_MAGMA = 13, //!< ![magma](pics/colormaps/colorscale_magma.jpg)
-    COLORMAP_INFERNO = 14, //!< ![inferno](pics/colormaps/colorscale_inferno.jpg)
-    COLORMAP_PLASMA = 15, //!< ![plasma](pics/colormaps/colorscale_plasma.jpg)
-    COLORMAP_VIRIDIS = 16, //!< ![viridis](pics/colormaps/colorscale_viridis.jpg)
-    COLORMAP_CIVIDIS = 17, //!< ![cividis](pics/colormaps/colorscale_cividis.jpg)
-    COLORMAP_TWILIGHT = 18, //!< ![twilight](pics/colormaps/colorscale_twilight.jpg)
-    COLORMAP_TWILIGHT_SHIFTED = 19, //!< ![twilight shifted](pics/colormaps/colorscale_twilight_shifted.jpg)
-    COLORMAP_TURBO = 20, //!< ![turbo](pics/colormaps/colorscale_turbo.jpg)
-    COLORMAP_DEEPGREEN = 21  //!< ![deepgreen](pics/colormaps/colorscale_deepgreen.jpg)
+    COLORMAP_PARULA = 12 //!< ![parula](pics/colormaps/colorscale_parula.jpg)
 };
 
 /** @example samples/cpp/falsecolor.cpp
