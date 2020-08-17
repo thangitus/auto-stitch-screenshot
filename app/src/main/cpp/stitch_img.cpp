@@ -4,13 +4,6 @@
 #include <sstream>
 #include <algorithm>
 
-template<typename T>
-std::string to_string(T value) {
-    std::ostringstream os;
-    os << value;
-    return os.str();
-}
-
 const float DEVIATION_X = 2;
 const float DEVIATION_Y = 100;
 const int MIN_MATCH = 30;
@@ -19,10 +12,6 @@ float ratio_scale = 1;
 int minWidth = INT_MAX;
 unordered_map<string, MatchDetail> *cacheMatchDetail;
 vector<int> order;
-
-using namespace std::chrono;
-high_resolution_clock::time_point start;
-
 
 extern "C"
 JNIEXPORT jboolean JNICALL
@@ -107,23 +96,14 @@ void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails) {
     src = res;
 }
 
-Mat stitchImagesVertical(vector<Mat> src) {
+Mat stitchImagesVertical(const vector<Mat>& src) {
     Mat res;
     vconcat(src, res);
     return res;
 }
 
-void logTime(string msg) {
-    high_resolution_clock::time_point now;
-    milliseconds duration;
-    now = high_resolution_clock::now();
-    duration = duration_cast<milliseconds>(now - start);
-    msg += to_string(duration.count());
-    __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s ", msg.c_str());
-}
 
-
-void detectAndCompute(Mat imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
+void detectAndCompute(const Mat& imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
                       int index) {
     Ptr<FeatureDetector> detector = FastFeatureDetector::create();
     Ptr<DescriptorExtractor> extractor = ORB::create();
@@ -152,8 +132,8 @@ vector<Mat> scaleAndGray(vector<Mat> &src) {
     return res;
 }
 
-void computeMatchDetail(Mat descriptors_object, vector<KeyPoint> &keypoints_object,
-                        Mat descriptors_scene,
+void computeMatchDetail(const Mat& descriptors_object, vector<KeyPoint> &keypoints_object,
+                        const Mat& descriptors_scene,
                         vector<KeyPoint> &keypoints_scene, MatchDetail &matchDetail) {
     BFMatcher matcher;
     vector<DMatch> good_matches, matches;
@@ -230,8 +210,6 @@ bool checkLargeSize(vector<string> &paths, vector<Mat> &src) {
         return false;
     else if (paths.empty())
         return true;
-    string msg = "paths size: " + to_string(paths.size());
-    __android_log_print(ANDROID_LOG_DEBUG, "Native", "%s", msg.c_str());
 
     vector<vector<KeyPoint>> keypoints(paths.size());
     vector<Mat> decryptions(paths.size());
@@ -264,7 +242,6 @@ bool checkSmallSize(vector<string> &paths, vector<Mat> &src) {
             MatchDetail matchDetail{i, j, 0};
             int numberMatch = getNumberKeyPointMatch(paths[i], paths[j]);
             if (numberMatch != INT8_MIN) {
-                __android_log_print(ANDROID_LOG_DEBUG, "Native", "Cache ne`");
                 if (numberMatch < 0) {
                     swap(matchDetail.img1, matchDetail.img2);
                     matchDetail.numberMatch = -(numberMatch);
