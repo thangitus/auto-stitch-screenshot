@@ -17,7 +17,7 @@ const int MIN_MATCH = 30;
 
 float ratio_scale = 1;
 int minWidth = INT_MAX;
-unordered_map<string, MatchDetail> cacheMatchDetail;
+unordered_map<string, MatchDetail> *cacheMatchDetail;
 vector<int> order;
 
 using namespace std::chrono;
@@ -29,6 +29,8 @@ JNIEXPORT jboolean JNICALL
 Java_com_zhihu_matisse_StitchImgPresenter_checkNativeStitch(JNIEnv *env, jobject thiz,
                                                             jobjectArray selected_paths,
                                                             jobjectArray list_Src) {
+    if (cacheMatchDetail == nullptr)
+        cacheMatchDetail = new unordered_map<string, MatchDetail>;
     vector<string> paths = objectArrayToVectorString(env, selected_paths);
     vector<Mat> listSrc = objectArrayToVectorMat(env, list_Src);
     if (paths.size() < 5) {
@@ -64,7 +66,7 @@ Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz
     vector<MatchDetail> matchDetails;
     for (int i = 1; i < src.size(); i++) {
         MatchDetail tmp{i - 1, i, 0, 0, 0};
-        tmp = cacheMatchDetail[paths[i - 1] + paths[i]];
+        tmp = (*cacheMatchDetail)[paths[i - 1] + paths[i]];
         if (tmp.numberMatch != 0) {
             matchDetails.push_back(tmp);
             continue;
@@ -75,6 +77,9 @@ Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz
     cropImg(src, matchDetails);
     Mat res = stitchImagesVertical(src);
     jobject bitmap = matToBitmap(env, res);
+    cacheMatchDetail->clear();
+    delete cacheMatchDetail;
+    order.clear();
     return bitmap;
 }
 
@@ -241,7 +246,7 @@ bool checkLargeSize(vector<string> &paths, vector<Mat> &src) {
             key = paths[i] + paths[i - 1];
         else
             key = paths[i - 1] + paths[i];
-        cacheMatchDetail[key] = matchDetail;
+        (*cacheMatchDetail)[key] = matchDetail;
 
         if (matchDetail.numberMatch < MIN_MATCH)
             return false;
@@ -277,7 +282,7 @@ bool checkSmallSize(vector<string> &paths, vector<Mat> &src) {
                 key = paths[j] + paths[i];
             else
                 key = paths[i] + paths[j];
-            cacheMatchDetail[key] = matchDetail;
+            (*cacheMatchDetail)[key] = matchDetail;
         }
     return computeOrder(paths.size(), matchDetailList);
 }
@@ -320,10 +325,10 @@ bool cache(vector<string> &paths, vector<Mat> &src) {
 
 int getNumberKeyPointMatch(string img1, string img2) {
     int res;
-    res = cacheMatchDetail[img1 + img2].numberMatch;
+    res = (*cacheMatchDetail)[img1 + img2].numberMatch;
     if (res)
         return res;
-    res = cacheMatchDetail[img2 + img1].numberMatch;
+    res = (*cacheMatchDetail)[img2 + img1].numberMatch;
     if (res)
         return -res;
     return INT8_MIN;
