@@ -68,6 +68,7 @@ Java_com_zhihu_matisse_StitchImgPresenter_stitchNative(JNIEnv *env, jobject thiz
     jobject bitmap = matToBitmap(env, res);
     cacheMatchDetail->clear();
     delete cacheMatchDetail;
+    cacheMatchDetail = nullptr;
     order.clear();
     return bitmap;
 }
@@ -96,15 +97,16 @@ void cropImg(vector<Mat> &src, vector<MatchDetail> matchDetails) {
     src = res;
 }
 
-Mat stitchImagesVertical(const vector<Mat>& src) {
+Mat stitchImagesVertical(const vector<Mat> &src) {
     Mat res;
     vconcat(src, res);
     return res;
 }
 
 
-void detectAndCompute(const Mat& imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
-                      int index) {
+void
+detectAndCompute(const Mat &imgSrc, vector<vector<KeyPoint> > &keypoints, vector<Mat> &decryptions,
+                 int index) {
     Ptr<FeatureDetector> detector = FastFeatureDetector::create();
     Ptr<DescriptorExtractor> extractor = ORB::create();
     Mat decryption;
@@ -132,8 +134,8 @@ vector<Mat> scaleAndGray(vector<Mat> &src) {
     return res;
 }
 
-void computeMatchDetail(const Mat& descriptors_object, vector<KeyPoint> &keypoints_object,
-                        const Mat& descriptors_scene,
+void computeMatchDetail(const Mat &descriptors_object, vector<KeyPoint> &keypoints_object,
+                        const Mat &descriptors_scene,
                         vector<KeyPoint> &keypoints_scene, MatchDetail &matchDetail) {
     BFMatcher matcher;
     vector<DMatch> good_matches, matches;
